@@ -1,0 +1,3 @@
+[submodule "bbbike"]
+	path = bbbike
+	url = https://github.com/eserte/bbbike.git

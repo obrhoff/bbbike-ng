@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+CAUTION: Do not modify this file unless you know what you are doing.
+         Unexpected results may occur if the code is changed deliberately.
+-->
+<dbmodel>
+<schema name="public" protected="true" fill-color="#e1e1e1" sql-disabled="true">
+</schema>
+
+<database name="new_database">
+</database>
+
+<table name="routes">
+	<schema name="public"/>
+	<position x="242" y="113"/>
+	<column name="name" not-null="true">
+		<type name="name"/>
+	</column>
+	<column name="geometry" not-null="true">
+		<type name="geometry" spatial-type="MULTIPOINT" variation="0" srid="0"/>
+	</column>
+</table>
+
+</dbmodel>
