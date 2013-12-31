@@ -8,8 +8,6 @@
 package main
 
 import (
-	"./bbbikeng"
-	"./misc"
 	"bufio"
 	"database/sql"
 	"flag"
@@ -19,6 +17,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"./bbbikeng/helper"
+	"./bbbikeng/model"
+	"./misc"
 )
 
 var dataPathFlag = flag.String("path", "", "bbbike data path")
@@ -30,7 +32,7 @@ const coordinateRegex = "[0-9]+,[0-9]+"
 const nameRegex = "^(.*)(\t)"
 const typeRegex = "\t+(.*?)\\s+"
 
-func readLines(path string, fileName string) ([]bbbike.Street, error) {
+func readLines(path string, fileName string) ([]model.Street, error) {
 
 	file, err := os.Open(path + "/" + fileName)
 	if err != nil {
@@ -38,7 +40,7 @@ func readLines(path string, fileName string) ([]bbbike.Street, error) {
 	}
 	defer file.Close()
 
-	var streets []bbbike.Street
+	var streets []model.Street
 	scanner := bufio.NewScanner(file)
 
 	nameRegex := regexp.MustCompile(nameRegex)
@@ -47,10 +49,10 @@ func readLines(path string, fileName string) ([]bbbike.Street, error) {
 
 	for scanner.Scan() {
 
-		var newStreet bbbike.Street
+		var newStreet model.Street
 
 		infoLine := scanner.Text()
-		infoLineConverted := toUtf8([]byte(infoLine))
+		infoLineConverted := helper.ConvertLatinToUTF8([]byte(infoLine))
 
 		name := nameRegex.FindString(infoLineConverted)
 		streetType := typeRegex.FindString(infoLineConverted)
@@ -65,13 +67,14 @@ func readLines(path string, fileName string) ([]bbbike.Street, error) {
 
 		for _, coord := range coords {
 			splittedCoords := strings.Split(coord, ",")
-			xPath, err := strconv.ParseFloat(splittedCoords[0], 64)
-			yPath, err := strconv.ParseFloat(splittedCoords[1], 64)
+			xPath, err := strconv.ParseFloat(splittedCoords[1], 64)
+			yPath, err := strconv.ParseFloat(splittedCoords[0], 64)
 			if err != nil {
 				panic(err)
 			}
-			var point bbbike.Point
-			lat, lng := convertToWGS84(yPath, xPath)
+			var point model.Point
+
+			lat, lng := helper.ConvertStandardToWGS84(yPath, xPath)
 			point.Lat = lat
 			point.Lng = lng
 			newStreet.Path = append(newStreet.Path, point)
@@ -101,18 +104,14 @@ func parseData(path string) {
 
 }
 
-func convertToWGS84(x float64, y float64) (xLat float64, yLat float64) {
-	return x, y
-}
-
-func InsertStreetIntoDatabase(streets []bbbike.Street) {
+func InsertStreetIntoDatabase(streets []model.Street) {
 
 	for _, street := range streets {
 
 		var points string
 		for _, pathPart := range street.Path {
-			latPath := strconv.FormatFloat(pathPart.Lat, 'f', 1, 64)
-			lngPath := strconv.FormatFloat(pathPart.Lng, 'f', 1, 64)
+			latPath := strconv.FormatFloat(pathPart.Lat, 'f', 6, 64)
+			lngPath := strconv.FormatFloat(pathPart.Lng, 'f', 6, 64)
 			point := ("(" + latPath + "," + lngPath + ")")
 			if points != "" {
 				points = (points + "," + point)
@@ -122,7 +121,7 @@ func InsertStreetIntoDatabase(streets []bbbike.Street) {
 		}
 
 		if points != "" {
-			fmt.Println("Inserting:", street.Name, "(", street.StreetType, " )")
+			fmt.Println("Inserting:", street.Name, "(", street.StreetType, " ) - (", points, ")")
 			_, err := db.Exec("INSERT INTO public.streets(name, type, streetpath) VALUES ($1, $2, path($3))", street.Name, street.StreetType, points)
 			if err != nil {
 				log.Fatalf("Database Error - : %s", err.Error())
@@ -130,14 +129,6 @@ func InsertStreetIntoDatabase(streets []bbbike.Street) {
 		}
 	}
 
-}
-
-func toUtf8(iso8859_1_buf []byte) string {
-	buf := make([]rune, len(iso8859_1_buf))
-	for i, b := range iso8859_1_buf {
-		buf[i] = rune(b)
-	}
-	return string(buf)
 }
 
 func main() {
