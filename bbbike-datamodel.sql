@@ -1,31 +1,18 @@
--- Database generated with pgModeler (PostgreSQL Database Modeler).
--- PostgreSQL version: 9.1
--- Project Site: pgmodeler.com.br
--- Model Author: ---
+CREATE EXTENSION postgis 
+CREATE EXTENSION postgis_topology;
+CREATE EXTENSION fuzzystrmatch;
+CREATE EXTENSION postgis_tiger_geocoder;
 
-SET check_function_bodies = false;
--- ddl-end --
-
-
--- Database creation must be done outside an multicommand file.
--- These commands were put in this file only for convenience.
--- -- object: new_database | type: DATABASE --
--- CREATE DATABASE new_database
--- ;
--- -- ddl-end --
--- 
-
--- object: public.streets | type: TABLE --
-CREATE TABLE public.streets(
-	streetid bigserial,
+CREATE TABLE public.streetpath(
+	pathid bigserial,
 	name varchar,
 	type varchar,
-	streetpath path,
-	CONSTRAINT streetid PRIMARY KEY (streetid)
+	geometry path,
+	attributes json,
+	CONSTRAINT streetpathid PRIMARY KEY (pathid)
 
 );
--- ddl-end --
--- object: public.city | type: TABLE --
+
 CREATE TABLE public.city(
 	name name,
 	bounds geometry(MULTIPOLYGON),
@@ -33,5 +20,12 @@ CREATE TABLE public.city(
 	CONSTRAINT cityid PRIMARY KEY (cityid)
 
 );
--- ddl-end --
 
+CREATE TABLE public.cyclepath(
+	pathid bigserial,
+	type varchar,
+	geometry path,
+	attributes json,
+	CONSTRAINT cyclepathid PRIMARY KEY (pathid)
+
+);
