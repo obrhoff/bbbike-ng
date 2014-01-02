@@ -8,10 +8,10 @@ package bbbike
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -80,11 +80,17 @@ func GetCyclepathFromId(id int, db *sql.DB) (cyclepath Street) {
 
 }
 
+func GetStreetIntersections(street Street) (intersections []Street) {
+
+	return intersections
+
+}
+
 func SearchForStreetName(name string, db *sql.DB) (streets []Street) {
 
 	log.Println("Searching for Streetname:", name)
 
-	rows, err := db.Query("select pathid, name, type, path from streetpath where name ilike $1", ("%" + name + "%"))
+	rows, err := db.Query("select pathid, name, type, ST_AsGeoJSON(path) from streetpath where name ilike $1", ("%" + name + "%"))
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}
@@ -149,17 +155,21 @@ func SearchForNearestStreetIntersectionFromPoint(point Point, street Street) (in
 
 func ConvertStreetPathToObject(streetPathData string) (streetPath []Point) {
 
-	regex := regexp.MustCompile("[0-9]+,[0-9]+")
-	pathData := regex.FindAllString(streetPathData, -1)
+	type Coordinate struct {
+		Type        string
+		Coordinates [][2]float64
+	}
 
-	for _, path := range pathData {
-		splittedCoords := strings.Split(path, ",")
-		lat, _ := strconv.ParseFloat(splittedCoords[0], 64)
-		lng, _ := strconv.ParseFloat(splittedCoords[1], 64)
+	var coordinates Coordinate
+	err := json.Unmarshal([]byte(streetPathData), &coordinates)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	for _, coord := range coordinates.Coordinates {
 		var newPoint Point
-		newPoint.Lat = lat
-		newPoint.Lng = lng
+		newPoint.Lat = coord[1]
+		newPoint.Lng = coord[0]
 		streetPath = append(streetPath, newPoint)
 	}
 
