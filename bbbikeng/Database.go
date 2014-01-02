@@ -59,7 +59,7 @@ func InsertCyclePathToDatabase(cyclepath Street, db *sql.DB) {
 func GetStreetFromId(id int, db *sql.DB) (street Street) {
 
 	var geometrys string
-	err := db.QueryRow("select pathid, name, type, path from streetpath where streetid = $1", id).Scan(&street.PathID, &street.Name, &street.StreetType, &geometrys)
+	err := db.QueryRow("select pathid, name, type, ST_AsGeoJSON(path)  from streetpath where streetid = $1", id).Scan(&street.PathID, &street.Name, &street.StreetType, &geometrys)
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}
@@ -71,7 +71,7 @@ func GetStreetFromId(id int, db *sql.DB) (street Street) {
 func GetCyclepathFromId(id int, db *sql.DB) (cyclepath Street) {
 
 	var geometrys string
-	err := db.QueryRow("select pathid, type, path from cyclepath where streetid = $1", id).Scan(&cyclepath.PathID, &cyclepath.StreetType, &geometrys)
+	err := db.QueryRow("select pathid, type, ST_AsGeoJSON(path)  from cyclepath where streetid = $1", id).Scan(&cyclepath.PathID, &cyclepath.StreetType, &geometrys)
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}
@@ -119,8 +119,9 @@ func SearchForNearestStreetFromPoint(point Point, db *sql.DB) (street Street) {
 	latPath, lngPath := PointLatitudeLongitudeAsString(point)
 
 	makePoint := ("ST_Distance(path, ST_GeomFromText('POINT(" + lngPath + " " + latPath + ")', 4326))")
-	query := fmt.Sprintf("SELECT pathid, name, type, path FROM streetpath ORDER BY %s LIMIT 1", makePoint)
+	query := fmt.Sprintf("SELECT pathid, name, type, ST_AsGeoJSON(path)  FROM streetpath ORDER BY %s LIMIT 1", makePoint)
 	err := db.QueryRow(query).Scan(&street.PathID, &street.Name, &street.StreetType, &geometrys)
+	street.Path = ConvertStreetPathToObject(geometrys)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -136,9 +137,10 @@ func SearchForNearestCyclepathFromPoint(point Point, db *sql.DB) (cyclepath Stre
 	var geometrys string
 	latPath, lngPath := PointLatitudeLongitudeAsString(point)
 	makePoint := ("ST_Distance(path, ST_GeomFromText('POINT(" + lngPath + " " + latPath + ")', 4326))")
-	query := fmt.Sprintf("SELECT pathid, type, path FROM cyclepath ORDER BY %s LIMIT 1", makePoint)
+	query := fmt.Sprintf("SELECT pathid, type, ST_AsGeoJSON(path) FROM cyclepath ORDER BY %s LIMIT 1", makePoint)
 
 	err := db.QueryRow(query).Scan(&cyclepath.PathID, &cyclepath.StreetType, &geometrys)
+	cyclepath.Path = ConvertStreetPathToObject(geometrys)
 
 	if err != nil {
 		log.Fatal(err)
