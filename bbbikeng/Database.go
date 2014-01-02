@@ -71,7 +71,7 @@ func GetStreetFromId(id int, db *sql.DB) (street Street) {
 func GetCyclepathFromId(id int, db *sql.DB) (cyclepath Street) {
 
 	var geometrys string
-	err := db.QueryRow("select pathid, type, ST_AsGeoJSON(path)  from cyclepath where streetid = $1", id).Scan(&cyclepath.PathID, &cyclepath.StreetType, &geometrys)
+	err := db.QueryRow("select pathid, type, ST_AsGeoJSON(path) from cyclepath where streetid = $1", id).Scan(&cyclepath.PathID, &cyclepath.StreetType, &geometrys)
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}
@@ -80,8 +80,30 @@ func GetCyclepathFromId(id int, db *sql.DB) (cyclepath Street) {
 
 }
 
-func GetStreetIntersections(street Street) (intersections []Street) {
+// returns crossing streets and intersections
+func GetStreetIntersections(street Street, db *sql.DB) (intersections []Street) {
 
+	// select s2.* from streetpath s1, streetpath s2 where s1.pathid=148 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path));
+
+	rows, err := db.Query("select s2.pathid, s2.name, s2.type, ST_AsGeoJSON(s2.path) from streetpath s1, streetpath s2 where s1.pathid = $1 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path))", street.PathID)
+	if err != nil {
+		log.Fatal("Error on opening database connection: %s", err.Error())
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var newStreet Street
+		var geometrys string
+
+		err := rows.Scan(&newStreet.PathID, &newStreet.Name, &newStreet.StreetType, &geometrys)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		newStreet.Path = ConvertStreetPathToObject(geometrys)
+		intersections = append(intersections, newStreet)
+	}
+
+	log.Println("Crosses Results:", intersections)
 	return intersections
 
 }
@@ -157,12 +179,7 @@ func SearchForNearestStreetIntersectionFromPoint(point Point, street Street) (in
 
 func ConvertStreetPathToObject(streetPathData string) (streetPath []Point) {
 
-	type Coordinate struct {
-		Type        string
-		Coordinates [][2]float64
-	}
-
-	var coordinates Coordinate
+	var coordinates GeoJSON
 	err := json.Unmarshal([]byte(streetPathData), &coordinates)
 	if err != nil {
 		log.Fatal(err)
@@ -178,6 +195,20 @@ func ConvertStreetPathToObject(streetPathData string) (streetPath []Point) {
 	return streetPath
 
 }
+
+/*
+func ConvertPointsToGeoJSON(points []Point)(json string) {
+	
+	var newJson GeoJSON
+
+	for i, points := range points {
+
+		newJson.Coordinates[i]
+
+	}
+
+
+} */
 
 func preparePointsForDatabase(points []Point) (preparedPoints string) {
 
