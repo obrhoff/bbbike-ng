@@ -7,6 +7,12 @@ type Street struct {
 	Path       []Point
 }
 
+type Attributes struct {
+	Greenways     string
+	Quality       string
+	TrafficLights string
+}
+
 func getPathConnections() (connections []Street) {
 
 	var con []Street
