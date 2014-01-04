@@ -2,23 +2,21 @@ package main
 
 import (
 	"./bbbikeng"
-	"database/sql"
 	"fmt"
 	"github.com/ant0ine/go-json-rest"
-	//"html"
 	//"log"
-	//"net/http"
+	"net/http"
 	//"strings"
 )
 
 func main() {
 
 	bbbikeng.ConnectToDatabase()
-	defer bbbike.db.Close()
+	defer bbbikeng.Connection.Close()
 
-	testPlacePoint1 := bbbike.MakeNewPoint("52.551080", "13.373370")
-	testPlacePoint2 := bbbike.MakeNewPoint("52.492491", "13.428981")
-	bbbike.CalculateRoute(testPlacePoint1, testPlacePoint2, db)
+	testPlacePoint1 := bbbikeng.MakeNewPoint("52.551080", "13.373370")
+	testPlacePoint2 := bbbikeng.MakeNewPoint("52.492491", "13.428981")
+	bbbikeng.CalculateRoute(testPlacePoint1, testPlacePoint2)
 
 	handler := rest.ResourceHandler{}
 	handler.SetRoutes(
@@ -32,7 +30,7 @@ func Search(w *rest.ResponseWriter, req *rest.Request) {
 
 	query := req.PathParam("name")
 	if len(query) > 0 {
-		results := bbbike.SearchForStreetName(query, db)
+		results := bbbikeng.SearchForStreetName(query)
 		fmt.Println("Results:", results)
 		w.WriteJson(&results)
 	}

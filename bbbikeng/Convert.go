@@ -6,6 +6,7 @@ package bbbikeng
 
 import (
 	"encoding/json"
+	"strconv"
 	"log"
 )
 
@@ -34,11 +35,11 @@ func ConvertLatinToUTF8(iso8859_1_buf []byte) string {
 
 }
 
-func ConvertGeoJSONtoPath(json string) (path []Point) {
+func ConvertGeoJSONtoPath(jsonInput string) (path []Point) {
 
 	var coordinates GeoJSON
 
-	err := json.Unmarshal([]byte(json), &coordinates)
+	err := json.Unmarshal([]byte(jsonInput), &coordinates)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,7 +55,7 @@ func ConvertGeoJSONtoPath(json string) (path []Point) {
 
 }
 
-func ConvertPathToGeoJSON(path []Point)(json string) {
+func ConvertPathToGeoJSON(path []Point)(jsonOutput string) {
 
 	var newJson GeoJSON
 	newJson.Type = "LineString"
@@ -65,10 +66,31 @@ func ConvertPathToGeoJSON(path []Point)(json string) {
 		newJson.Coordinates = append(newJson.Coordinates, newCoordinates)
 	}
 
+	switch len(path){
+		case 1 : newJson.Type = "Point"
+		default: newJson.Type = "LineString"
+	}
+
 	jsonData, err := json.Marshal(newJson)
 	if err != nil {
 		log.Fatal("Failed to Convert Path to GeoJSON: %s", err.Error())
 	}
 
 	return string(jsonData)
+}
+
+func preparePointsForDatabase(points []Point) (preparedPoints string) {
+
+	for i, point := range points {
+		latPath := strconv.FormatFloat(point.Lat, 'f', 6, 64)
+		lngPath := strconv.FormatFloat(point.Lng, 'f', 6, 64)
+		//(-71.060316 48.432044, -71.060316 48.432044)
+		newPoint := (lngPath + " " + latPath)
+		if i > 0 {
+			preparedPoints = (preparedPoints + ",")
+		}
+		preparedPoints = (preparedPoints + " " + newPoint)
+
+	}
+	return ("ST_GeomFromText('LINESTRING(" + preparedPoints + ")', 4326)")
 }

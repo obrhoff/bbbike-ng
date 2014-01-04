@@ -11,7 +11,7 @@ type Route struct {
 
 var found bool
 
-func CalculateRoute(startPoint Point, endPoint Point, db *sql.DB) (route Route) {
+func CalculateRoute(startPoint Point, endPoint Point) (route Route) {
 
 	log.Println("Start Latitude:", startPoint)
 	log.Println("End Latitude", endPoint)

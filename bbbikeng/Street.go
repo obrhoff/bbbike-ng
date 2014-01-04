@@ -5,6 +5,12 @@ type Street struct {
 	Name       string
 	StreetType string
 	Path       []Point
+	Intersections []Intersection
+}
+
+type Intersection struct {
+	Coordinate Point
+	Street Street
 }
 
 type Attributes struct {
