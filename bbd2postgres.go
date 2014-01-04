@@ -10,7 +10,6 @@ package main
 import (
 	"./bbbikeng"
 	"bufio"
-	"database/sql"
 	"flag"
 	"fmt"
 	"log"
@@ -21,7 +20,6 @@ import (
 )
 
 var dataPathFlag = flag.String("path", "", "bbbike data path")
-var db *sql.DB
 
 const untitled = "untitled path"
 
@@ -29,7 +27,7 @@ const coordinateRegex = "[0-9]+,[0-9]+"
 const nameRegex = "^(.*)(\t)"
 const typeRegex = "\t+(.*?)\\s+"
 
-func readLines(path string, fileName string) ([]bbbike.Street, error) {
+func readLines(path string, fileName string) ([]bbbikeng.Street, error) {
 
 	file, err := os.Open(path + "/" + fileName)
 	if err != nil {
@@ -37,7 +35,7 @@ func readLines(path string, fileName string) ([]bbbike.Street, error) {
 	}
 	defer file.Close()
 
-	var streets []bbbike.Street
+	var streets []bbbikeng.Street
 	scanner := bufio.NewScanner(file)
 
 	nameRegex := regexp.MustCompile(nameRegex)
@@ -46,10 +44,10 @@ func readLines(path string, fileName string) ([]bbbike.Street, error) {
 
 	for scanner.Scan() {
 
-		var newStreet bbbike.Street
+		var newStreet bbbikeng.Street
 
 		infoLine := scanner.Text()
-		infoLineConverted := bbbike.ConvertLatinToUTF8([]byte(infoLine))
+		infoLineConverted := bbbikeng.ConvertLatinToUTF8([]byte(infoLine))
 
 		name := nameRegex.FindString(infoLineConverted)
 		streetType := typeRegex.FindString(infoLineConverted)
@@ -64,7 +62,7 @@ func readLines(path string, fileName string) ([]bbbike.Street, error) {
 			newStreet.Name = strings.TrimSpace(name)
 			newStreet.StreetType = strings.TrimSpace(streetType)
 
-			for i, coord := range coords {
+			for _, coord := range coords {
 				splittedCoords := strings.Split(coord, ",")
 
 				xPath, err := strconv.ParseFloat(splittedCoords[1], 64)
@@ -72,16 +70,14 @@ func readLines(path string, fileName string) ([]bbbike.Street, error) {
 				if err != nil {
 					panic(err)
 				}
-				var point bbbike.Point
 
-				lat, lng := bbbike.ConvertStandardToWGS84(yPath, xPath)
+				var point bbbikeng.Point
+				lat, lng := bbbikeng.ConvertStandardToWGS84(yPath, xPath)
 				point.Lat = lat
 				point.Lng = lng
 				newStreet.Path = append(newStreet.Path, point)
 
 			}
-
-			fmt.Println("New GeoJSON:", newGeoJSON)
 
 			streets = append(streets, newStreet)
 		}
@@ -101,17 +97,17 @@ func parseData(path string) {
 		log.Fatalf("Failed reading Strassen File: %s", fileErr)
 	}
 
-	db = bbbike.ConnectToDatabase()
-	defer db.Close()
+	bbbikeng.ConnectToDatabase()
+	defer bbbikeng.Connection.Close()
 
 	for i, cyclepath := range cyclepaths {
 		cyclepath.PathID = i
-		bbbike.InsertCyclePathToDatabase(cyclepath, db)
+		bbbikeng.InsertCyclePathToDatabase(cyclepath)
 	}
 
 	for i, street := range streets {
 		street.PathID = i
-		bbbike.InsertStreetToDatabase(street, db)
+		bbbikeng.InsertStreetToDatabase(street)
 	}
 
 }
