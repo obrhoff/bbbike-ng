@@ -4,7 +4,7 @@
  * Time: 11:19
  */
 
-package bbbike
+package bbbikeng
 
 import (
 	"database/sql"
@@ -22,7 +22,9 @@ const host = "127.0.0.1"
 const port = "5433"
 const database = "bbbikeng"
 
-func InsertStreetToDatabase(street Street, db *sql.DB) {
+var connection *sql.DB
+
+func InsertStreetToDatabase(street Street) {
 
 	//log.Println("Inserting Streetpath:", street)
 	var err error
@@ -32,7 +34,7 @@ func InsertStreetToDatabase(street Street, db *sql.DB) {
 		fmt.Println("Inserting:", street)
 		fixedName := strings.Replace(street.Name, "'", "''", -1)
 		query := fmt.Sprintf("INSERT INTO streetpath(pathid, name, type, path) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(street.PathID), fixedName, street.StreetType, points)
-		_, err = db.Exec(query)
+		_, err = connection.Exec(query)
 	}
 
 	if err != nil {
@@ -41,14 +43,14 @@ func InsertStreetToDatabase(street Street, db *sql.DB) {
 
 }
 
-func InsertCyclePathToDatabase(cyclepath Street, db *sql.DB) {
+func InsertCyclePathToDatabase(cyclepath Street) {
 
 	//log.Println("Inserting Cyclepath:", cyclepath)
 	var err error
 	if len(cyclepath.Path) >= 2 {
 		points := preparePointsForDatabase(cyclepath.Path)
 		query := fmt.Sprintf("INSERT INTO cyclepath(pathid, type, path) VALUES (%s, '%s', %s)", strconv.Itoa(cyclepath.PathID), cyclepath.StreetType, points)
-		_, err = db.Exec(query)
+		_, err = connection.Exec(query)
 	}
 
 	if err != nil {
@@ -56,10 +58,10 @@ func InsertCyclePathToDatabase(cyclepath Street, db *sql.DB) {
 	}
 }
 
-func GetStreetFromId(id int, db *sql.DB) (street Street) {
+func GetStreetFromId(id int) (street Street) {
 
 	var geometrys string
-	err := db.QueryRow("select pathid, name, type, ST_AsGeoJSON(path)  from streetpath where streetid = $1", id).Scan(&street.PathID, &street.Name, &street.StreetType, &geometrys)
+	err := connection.QueryRow("select pathid, name, type, ST_AsGeoJSON(path)  from streetpath where pathid = $1", id).Scan(&street.PathID, &street.Name, &street.StreetType, &geometrys)
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}
@@ -68,10 +70,10 @@ func GetStreetFromId(id int, db *sql.DB) (street Street) {
 
 }
 
-func GetCyclepathFromId(id int, db *sql.DB) (cyclepath Street) {
+func GetCyclepathFromId(id int) (cyclepath Street) {
 
 	var geometrys string
-	err := db.QueryRow("select pathid, type, ST_AsGeoJSON(path) from cyclepath where streetid = $1", id).Scan(&cyclepath.PathID, &cyclepath.StreetType, &geometrys)
+	err := connection.QueryRow("select pathid, type, ST_AsGeoJSON(path) from cyclepath where pathid = $1", id).Scan(&cyclepath.PathID, &cyclepath.StreetType, &geometrys)
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}
@@ -81,11 +83,11 @@ func GetCyclepathFromId(id int, db *sql.DB) (cyclepath Street) {
 }
 
 // returns crossing streets and intersections
-func GetStreetIntersections(street Street, db *sql.DB) (intersections []Street) {
+func GetStreetIntersections(street Street) (intersections []Street) {
 
 	// select s2.* from streetpath s1, streetpath s2 where s1.pathid=148 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path));
 
-	rows, err := db.Query("select s2.pathid, s2.name, s2.type, ST_AsGeoJSON(s2.path) from streetpath s1, streetpath s2 where s1.pathid = $1 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path))", street.PathID)
+	rows, err := connection.Query("select s2.pathid, s2.name, s2.type, ST_AsGeoJSON(s2.path) from streetpath s1, streetpath s2 where s1.pathid = $1 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path))", street.PathID)
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}
@@ -93,26 +95,23 @@ func GetStreetIntersections(street Street, db *sql.DB) (intersections []Street) 
 	for rows.Next() {
 		var newStreet Street
 		var geometrys string
-
 		err := rows.Scan(&newStreet.PathID, &newStreet.Name, &newStreet.StreetType, &geometrys)
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		newStreet.Path = ConvertStreetPathToObject(geometrys)
 		intersections = append(intersections, newStreet)
 	}
 
-	log.Println("Crosses Results:", intersections)
 	return intersections
 
 }
 
-func SearchForStreetName(name string, db *sql.DB) (streets []Street) {
+func SearchForStreetName(name string) (streets []Street) {
 
 	log.Println("Searching for Streetname:", name)
 
-	rows, err := db.Query("select pathid, name, type, ST_AsGeoJSON(path) from streetpath where name ilike $1", ("%" + name + "%"))
+	rows, err := connection.Query("select pathid, name, type, ST_AsGeoJSON(path) from streetpath where name ilike $1", ("%" + name + "%"))
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}
@@ -130,11 +129,10 @@ func SearchForStreetName(name string, db *sql.DB) (streets []Street) {
 		streets = append(streets, newStreet)
 	}
 
-	log.Println("Search Results:", streets)
 	return streets
 }
 
-func SearchForNearestStreetFromPoint(point Point, db *sql.DB) (street Street) {
+func SearchForNearestStreetFromPoint(point Point) (street Street) {
 
 	//SELECT * FROM streetpath ORDER BY ST_Distance(path, ST_GeomFromText('POINT(13.373370 52.551080)', 4326)) LIMIT 1;
 	var geometrys string
@@ -142,7 +140,7 @@ func SearchForNearestStreetFromPoint(point Point, db *sql.DB) (street Street) {
 
 	makePoint := ("ST_Distance(path, ST_GeomFromText('POINT(" + lngPath + " " + latPath + ")', 4326))")
 	query := fmt.Sprintf("SELECT pathid, name, type, ST_AsGeoJSON(path)  FROM streetpath ORDER BY %s LIMIT 1", makePoint)
-	err := db.QueryRow(query).Scan(&street.PathID, &street.Name, &street.StreetType, &geometrys)
+	err := connection.QueryRow(query).Scan(&street.PathID, &street.Name, &street.StreetType, &geometrys)
 	street.Path = ConvertStreetPathToObject(geometrys)
 	if err != nil {
 		log.Fatal(err)
@@ -154,14 +152,14 @@ func SearchForNearestStreetFromPoint(point Point, db *sql.DB) (street Street) {
 
 }
 
-func SearchForNearestCyclepathFromPoint(point Point, db *sql.DB) (cyclepath Street) {
+func SearchForNearestCyclepathFromPoint(point Point) (cyclepath Street) {
 
 	var geometrys string
 	latPath, lngPath := PointLatitudeLongitudeAsString(point)
 	makePoint := ("ST_Distance(path, ST_GeomFromText('POINT(" + lngPath + " " + latPath + ")', 4326))")
 	query := fmt.Sprintf("SELECT pathid, type, ST_AsGeoJSON(path) FROM cyclepath ORDER BY %s LIMIT 1", makePoint)
 
-	err := db.QueryRow(query).Scan(&cyclepath.PathID, &cyclepath.StreetType, &geometrys)
+	err := connection.QueryRow(query).Scan(&cyclepath.PathID, &cyclepath.StreetType, &geometrys)
 	cyclepath.Path = ConvertStreetPathToObject(geometrys)
 
 	if err != nil {
@@ -177,10 +175,10 @@ func SearchForNearestStreetIntersectionFromPoint(point Point, street Street) (in
 
 } */
 
-func ConvertStreetPathToObject(streetPathData string) (streetPath []Point) {
+func ConvertStreetPathToObject(json string) (path []Point) {
 
 	var coordinates GeoJSON
-	err := json.Unmarshal([]byte(streetPathData), &coordinates)
+	err := json.Unmarshal([]byte(json), &coordinates)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -189,26 +187,32 @@ func ConvertStreetPathToObject(streetPathData string) (streetPath []Point) {
 		var newPoint Point
 		newPoint.Lat = coord[1]
 		newPoint.Lng = coord[0]
-		streetPath = append(streetPath, newPoint)
+		path = append(path, newPoint)
 	}
 
-	return streetPath
+	return path
 
 }
 
-/*
-func ConvertPointsToGeoJSON(points []Point)(json string) {
-	
+
+func ConvertPointsToGeoJSON(path []Point)(json string) {
+
 	var newJson GeoJSON
-
-	for i, points := range points {
-
-		newJson.Coordinates[i]
-
+	newJson.Type = "LineString"
+	for _, point := range path {
+		var newCoordinates [2]float64
+		newCoordinates[1] = point.Lat
+		newCoordinates[0] = point.Lng
+		newJson.Coordinates = append(newJson.Coordinates, newCoordinates)
 	}
 
+	jsonData, err := json.Marshal(newJson)
+	if err != nil {
+		log.Fatal("Failed to Convert Path to GeoJSON: %s", err.Error())
+	}
 
-} */
+	return string(jsonData)
+}
 
 func preparePointsForDatabase(points []Point) (preparedPoints string) {
 
@@ -227,19 +231,16 @@ func preparePointsForDatabase(points []Point) (preparedPoints string) {
 	return ("ST_GeomFromText('LINESTRING(" + preparedPoints + ")', 4326)")
 }
 
-func ConnectToDatabase() (db *sql.DB) {
+func ConnectToDatabase() {
 
 	connectionParameter := fmt.Sprint("user=", user, " password=", password, " host=", host, " port=", port, " dbname=", database)
 	fmt.Println("Connecting to Database:", host)
 
-	database, err := sql.Open("postgres", connectionParameter)
-	err = database.Ping() // This DOES open a connection if necessary. This makes sure the database is accessible
+	connection, err := sql.Open("postgres", connectionParameter)
+	err = connection.Ping() // This DOES open a connection if necessary. This makes sure the database is accessible
 
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}
-
-	db = database
-	return database
 
 }

@@ -1,26 +1,29 @@
-package main
+package bbbikeng
 
 import (
-	"./bbbikeng"
+	"database/sql"
 	"fmt"
+	"testing"
 )
 
-func testSearchForNearestStreetFromPoint() {
+var db *sql.DB
 
-	db = bbbike.ConnectToDatabase()
+func TestSearchForNearestStreetFromPoint() *testing.T {
+
+	db = ConnectToDatabase()
 	defer db.Close()
 
-	testPlacePoint1 := bbbike.MakeNewPoint("52.551080", "13.373370")
-	testPlaceResult1 := bbbike.SearchForNearestStreetFromPoint(testPlacePoint1, db)
+	testPlacePoint1 := MakeNewPoint("52.551080", "13.373370")
+	testPlaceResult1 := SearchForNearestStreetFromPoint(testPlacePoint1, db)
 	fmt.Println("Results", testPlaceResult1)
 
 }
 
-func testSearchForStreetName() {
+func TestSearchForStreetName() *testing.T {
 
-	db = bbbike.ConnectToDatabase()
+	db = ConnectToDatabase()
 	defer db.Close()
 
-	bbbike.SearchForStreetName("urbanstr", db)
+	SearchForStreetName("urbanstr", db)
 
 }

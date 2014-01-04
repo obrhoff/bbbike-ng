@@ -61,11 +61,12 @@ func readLines(path string, fileName string) ([]bbbike.Street, error) {
 				name = untitled
 			}
 
-			newStreet.Name = name
-			newStreet.StreetType = streetType
+			newStreet.Name = strings.TrimSpace(name)
+			newStreet.StreetType = strings.TrimSpace(streetType)
 
-			for _, coord := range coords {
+			for i, coord := range coords {
 				splittedCoords := strings.Split(coord, ",")
+
 				xPath, err := strconv.ParseFloat(splittedCoords[1], 64)
 				yPath, err := strconv.ParseFloat(splittedCoords[0], 64)
 				if err != nil {
@@ -76,9 +77,12 @@ func readLines(path string, fileName string) ([]bbbike.Street, error) {
 				lat, lng := bbbike.ConvertStandardToWGS84(yPath, xPath)
 				point.Lat = lat
 				point.Lng = lng
-
 				newStreet.Path = append(newStreet.Path, point)
+
 			}
+
+			fmt.Println("New GeoJSON:", newGeoJSON)
+
 			streets = append(streets, newStreet)
 		}
 

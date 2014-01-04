@@ -1,4 +1,4 @@
-package bbbike
+package bbbikeng
 
 type Street struct {
 	PathID     int
@@ -11,11 +11,4 @@ type Attributes struct {
 	Greenways     string
 	Quality       string
 	TrafficLights string
-}
-
-func getPathConnections() (connections []Street) {
-
-	var con []Street
-
-	return con
 }
