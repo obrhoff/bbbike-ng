@@ -30,7 +30,6 @@ func CalculateRoute(startPoint Point, endPoint Point) (route Route) {
 
 func Test(){
 
-
 	street := GetStreetFromId(148)
 
 	firstInter := street.Intersections[1]

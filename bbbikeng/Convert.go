@@ -6,7 +6,6 @@ package bbbikeng
 
 import (
 	"encoding/json"
-	"strconv"
 	"log"
 	"math"
 )
@@ -93,24 +92,8 @@ func ConvertPathToGeoJSON(path []Point)(jsonOutput string) {
 
 func geoJsonInsert(geoJson string) (statement string) {
 
-	return ("ST_TRANSFORM(ST_GeomFromGeoJSON('"+ geoJson + "'),3857)")
+	return ("ST_TRANSFORM(ST_SetSRID(ST_GeomFromGeoJSON('"+ geoJson + "'), '4326'),4326)")
 
-}
-
-func preparePointsForDatabase(points []Point) (preparedPoints string) {
-
-	for i, point := range points {
-		latPath := strconv.FormatFloat(point.Lat, 'f', 6, 64)
-		lngPath := strconv.FormatFloat(point.Lng, 'f', 6, 64)
-		//(-71.060316 48.432044, -71.060316 48.432044)
-		newPoint := (lngPath + " " + latPath)
-		if i > 0 {
-			preparedPoints = (preparedPoints + ",")
-		}
-		preparedPoints = (preparedPoints + " " + newPoint)
-
-	}
-	return ("ST_GeomFromText('LINESTRING(" + preparedPoints + ")', 4326)")
 }
 
 func Round(val float64, prec int) float64 {

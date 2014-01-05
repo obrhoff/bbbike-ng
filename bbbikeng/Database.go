@@ -25,46 +25,39 @@ var Connection *sql.DB
 
 func InsertStreetToDatabase(street Street) {
 
-	if len(street.Path) > 1 {
+	//log.Println("Inserting Streetpath:", street)
+	var err error
 
-		//log.Println("Inserting Streetpath:", street)
-		var err error
+	//points := preparePointsForDatabase(street.Path)
+	points := geoJsonInsert(ConvertPathToGeoJSON(street.Path))
+	fmt.Println("Inserting:", street)
+	fixedName := strings.Replace(street.Name, "'", "''", -1)
 
-		points := preparePointsForDatabase(street.Path)
-		//	points := geoJsonInsert(ConvertPathToGeoJSON(street.Path))
-		fmt.Println("Inserting:", street)
-		fixedName := strings.Replace(street.Name, "'", "''", -1)
+	query := fmt.Sprintf("INSERT INTO streetpath(pathid, name, type, path) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(street.PathID), fixedName, street.StreetType, points)
+	fmt.Println("Insert:", query)
+	_, err = Connection.Exec(query)
 
-		query := fmt.Sprintf("INSERT INTO streetpath(pathid, name, type, path) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(street.PathID), fixedName, street.StreetType, points)
-		fmt.Println("Insert:", query)
-		_, err = Connection.Exec(query)
-
-		if err != nil {
-			log.Fatal("Error inserting Street Into Database: %s", err.Error())
-		}
+	if err != nil {
+		log.Fatal("Error inserting Street Into Database: %s", err.Error())
 	}
-
 
 
 }
 
 func InsertCyclePathToDatabase(cyclepath Street) {
 
-	if len(cyclepath.Path) > 1 {
 
-		var err error
-		points := preparePointsForDatabase(cyclepath.Path)
-		//points := geoJsonInsert(ConvertPathToGeoJSON(cyclepath.Path))
-		query := fmt.Sprintf("INSERT INTO cyclepath(pathid, type, path) VALUES (%s, '%s', %s)", strconv.Itoa(cyclepath.PathID), cyclepath.StreetType, points)
-		fmt.Println("Insert:", query)
+	var err error
+	//points := preparePointsForDatabase(cyclepath.Path)
+	points := geoJsonInsert(ConvertPathToGeoJSON(cyclepath.Path))
+	query := fmt.Sprintf("INSERT INTO cyclepath(pathid, type, path) VALUES (%s, '%s', %s)", strconv.Itoa(cyclepath.PathID), cyclepath.StreetType, points)
+	fmt.Println("Insert:", query)
 
-		_, err = Connection.Exec(query)
+	_, err = Connection.Exec(query)
 
-		if err != nil {
-			log.Fatal("Error inserting Cyclepath Into Database: %s", err.Error())
-		}
+	if err != nil {
+		log.Fatal("Error inserting Cyclepath Into Database: %s", err.Error())
 	}
-
 
 }
 
@@ -98,8 +91,6 @@ func GetCyclepathFromId(id int) (cyclepath Street) {
 // returns crossing streets and intersections
 func GetStreetIntersections(street *Street) (intersections []Intersection) {
 
-	// select s2.* from streetpath s1, streetpath s2 where s1.pathid=148 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path));
- // select s2.pathid, s2.name, s2.type, ST_AsGeoJSON(ST_Intersection(s1.path, s2.path)), ST_AsGeoJSON(s2.path) from streetpath s1, streetpath s2 where s1.pathid = 148 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path));
 	rows, err := Connection.Query("select s2.pathid, s2.name, s2.type, ST_AsGeoJSON(ST_Intersection(s1.path, s2.path)), ST_AsGeoJSON(s2.path) from streetpath s1, streetpath s2 where s1.pathid = $1 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path))", street.PathID)
 	if err != nil {
 		log.Fatal("Error on getting Intersections: %s", err.Error())
@@ -138,9 +129,9 @@ func SearchForStreetName(name string) (streets []Street) {
 	}
 	defer rows.Close()
 	for rows.Next() {
+
 		var newStreet Street
 		var geometrys string
-
 		err := rows.Scan(&newStreet.PathID, &newStreet.Name, &newStreet.StreetType, &geometrys)
 		if err != nil {
 			log.Fatal(err)
