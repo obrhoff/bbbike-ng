@@ -14,16 +14,13 @@ func main() {
 	bbbikeng.ConnectToDatabase()
 	defer bbbikeng.Connection.Close()
 
-	bbbikeng.Test()
-
-	/*
 	handler := rest.ResourceHandler{}
 	handler.SetRoutes(
 		rest.Route{"GET", "/search/:name", Search},
 	)
 
 
-	http.ListenAndServe(":8080", &handler) */
+	http.ListenAndServe(":8080", &handler)
 
 }
 
