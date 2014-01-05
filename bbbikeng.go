@@ -19,7 +19,6 @@ func main() {
 		rest.Route{"GET", "/search/:name", Search},
 	)
 
-
 	http.ListenAndServe(":8080", &handler)
 
 }

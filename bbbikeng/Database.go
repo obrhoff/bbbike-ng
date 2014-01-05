@@ -27,7 +27,6 @@ func InsertStreetToDatabase(street Street) {
 
 	//log.Println("Inserting Streetpath:", street)
 	var err error
-
 	//points := preparePointsForDatabase(street.Path)
 	points := geoJsonInsert(ConvertPathToGeoJSON(street.Path))
 	fmt.Println("Inserting:", street)

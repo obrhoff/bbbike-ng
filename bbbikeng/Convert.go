@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"log"
 	"math"
+	"fmt"
 )
 
 const X0 = -780761.760862528
@@ -39,10 +40,12 @@ func ConvertGeoJSONtoPoint(jsonInput string) (point Point) {
 
 	var coordinates GeoJSONPoint
 
+	/*
+
 	err := json.Unmarshal([]byte(jsonInput), &coordinates)
 	if err != nil {
 		log.Fatal(err)
-	}
+	} */
 
 	return MakeNewPoint(coordinates.Coordinates[1], coordinates.Coordinates[0])
 
@@ -50,16 +53,52 @@ func ConvertGeoJSONtoPoint(jsonInput string) (point Point) {
 
 func ConvertGeoJSONtoPath(jsonInput string) (path []Point) {
 
-	var coordinates GeoJSON
+	//
 
+	var f interface{}
+	err := json.Unmarshal([]byte(jsonInput), &f)
+	if err != nil {
+		log.Fatal("JSON Unmarshal error:", err)
+	}
+
+	m := f.(map[string]interface{})
+	dataType := m["type"]
+
+	if dataType == "LineString" {
+		var coordinates GeoJSON
+		err := json.Unmarshal([]byte(jsonInput), &coordinates)
+		if err != nil {
+			log.Fatal("JSON Unmarshal error:", err)
+		}
+		for _, coord := range coordinates.Coordinates {
+			path = append(path, MakeNewPoint(coord[1], coord[0]))
+		}
+	} else if dataType == "Point" {
+
+		var coordinates GeoJSONPoint
+		err := json.Unmarshal([]byte(jsonInput), &coordinates)
+		if err != nil {
+			log.Fatal("JSON Unmarshal error:", err)
+		}
+
+		point := MakeNewPoint(coordinates.Coordinates[1], coordinates.Coordinates[0])
+		path = append(path, point)
+
+		fmt.Println("Coord:", point)
+
+	}
+
+
+
+	/*
 	err := json.Unmarshal([]byte(jsonInput), &coordinates)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("JSON Unmarshal error:", err)
 	}
 
 	for _, coord := range coordinates.Coordinates {
 		path = append(path, MakeNewPoint(coord[1], coord[0]))
-	}
+	} */
 
 	return path
 
@@ -68,7 +107,6 @@ func ConvertGeoJSONtoPath(jsonInput string) (path []Point) {
 func ConvertPathToGeoJSON(path []Point)(jsonOutput string) {
 
 	var newJson GeoJSON
-	newJson.Type = "LineString"
 	for _, point := range path {
 		var newCoordinates [2]float64
 		newCoordinates[1] = point.Lat

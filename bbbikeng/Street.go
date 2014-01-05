@@ -39,7 +39,12 @@ func (f Street) GetGeoJSONPath() (jsonOutput string) {
 	return ConvertPathToGeoJSON(f.Path)
 }
 
+
 func (f *Intersection) SetCoordinationFromGeoJSON(jsonInput string) {
-	f.Coordinate = ConvertGeoJSONtoPoint(jsonInput)
+	point := ConvertGeoJSONtoPath(jsonInput)
+	if len(point) > 0 {
+		f.Coordinate = point[0]
+	}
+
 }
 
