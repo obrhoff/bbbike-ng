@@ -170,7 +170,7 @@ func SearchForStreetName(name string) (streets []Street) {
 
 	log.Println("Searching for Streetname:", name)
 
-	rows, err := Connection.Query("select streetpathid, name, type, ST_AsGeoJSON(path) from streetpaths where name ilike $1", ("%" + name + "%"))
+	rows, err := Connection.Query("select streetpathid, name, type, ST_AsGeoJSON(path) from streetpaths where name ilike $1 LIMIT 10", ("%" + name + "%"))
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}

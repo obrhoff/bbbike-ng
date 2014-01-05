@@ -53,8 +53,6 @@ func ConvertGeoJSONtoPoint(jsonInput string) (point Point) {
 
 func ConvertGeoJSONtoPath(jsonInput string) (path []Point) {
 
-	//
-
 	var f interface{}
 	err := json.Unmarshal([]byte(jsonInput), &f)
 	if err != nil {
@@ -84,24 +82,8 @@ func ConvertGeoJSONtoPath(jsonInput string) (path []Point) {
 		point := MakeNewPoint(coordinates.Coordinates[1], coordinates.Coordinates[0])
 		path = append(path, point)
 
-		fmt.Println("Coord:", point)
-
 	}
-
-
-
-	/*
-	err := json.Unmarshal([]byte(jsonInput), &coordinates)
-	if err != nil {
-		log.Fatal("JSON Unmarshal error:", err)
-	}
-
-	for _, coord := range coordinates.Coordinates {
-		path = append(path, MakeNewPoint(coord[1], coord[0]))
-	} */
-
 	return path
-
 }
 
 func ConvertPathToGeoJSON(path []Point)(jsonOutput string) {
