@@ -23,7 +23,6 @@ func CalculateRoute(startPoint Point, endPoint Point) (route Route) {
 	fmt.Println("Correction Start Point:", startStreetPoint)
 	fmt.Println("Correction End Point:", endStreetPoint)
 
-
 	return route
 
 }

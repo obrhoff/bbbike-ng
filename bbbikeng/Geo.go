@@ -17,6 +17,11 @@ type GeoJSON struct {
 	Coordinates [][2]float64
 }
 
+type GeoJSONPoint struct {
+	Type        string
+	Coordinates [2]float64
+}
+
 func (f *Point) SetLat(lat float64){
 	f.Lat = Round(lat, 6)
 }
@@ -74,7 +79,7 @@ func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters int) 
 
 }
 
-/*
+
 func PathFromIntersectionToIntersection(entranceIntersection Point, exitIntersection Point, street Street) (points []Point) {
 
 	var beginningIndex int
@@ -84,11 +89,9 @@ func PathFromIntersectionToIntersection(entranceIntersection Point, exitIntersec
 
 		firstPoint := points[i]
 		secondPoint := points[i+1]
-
-		if IsBeetweenLine(firstPoint, secondPoint, entranceIntersection) {
+		if isBoundedBox(firstPoint, secondPoint, entranceIntersection) {
 			beginningIndex = i + 1
-		}
-		if IsBeetweenLine(firstPoint, secondPoint, exitIntersection) {
+		} else if isBoundedBox(firstPoint, secondPoint, exitIntersection) {
 			endingIndex = i - 1
 		}
 	}
@@ -100,7 +103,7 @@ func PathFromIntersectionToIntersection(entranceIntersection Point, exitIntersec
 	points = append(points, exitIntersection)
 	return points
 
-} */
+}
 
 func BearingBetweenPoints(firstSegment Point, secondSegment Point) (angle float64) {
 
@@ -159,9 +162,7 @@ func IntersectionFromPaths(firstPath []Point, secondPath []Point) (intersection 
 			secondLine[0] = secondPathFirstPoint
 			secondLine[1] = secondPathSecondPoint
 
-			var foundIntersection Point
-			foundIntersection, _ = IntersectionFromLines(firstLine, secondLine)
-
+			foundIntersection, _ := IntersectionFromLines(firstLine, secondLine)
 			if isBoundedBox(firstPathFirstPoint, firstPathSecondPoint, foundIntersection) && isBoundedBox(secondPathFirstPoint, secondPathSecondPoint, foundIntersection) {
 				if foundIntersection.Compare(firstPathFirstPoint) {
 					return firstPathFirstPoint

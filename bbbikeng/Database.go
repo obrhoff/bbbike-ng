@@ -99,8 +99,8 @@ func GetCyclepathFromId(id int) (cyclepath Street) {
 func GetStreetIntersections(street *Street) (intersections []Intersection) {
 
 	// select s2.* from streetpath s1, streetpath s2 where s1.pathid=148 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path));
-
-	rows, err := Connection.Query("select s2.pathid, s2.name, s2.type, ST_AsGeoJSON(s2.path) from streetpath s1, streetpath s2 where s1.pathid = $1 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path))", street.PathID)
+ // select s2.pathid, s2.name, s2.type, ST_AsGeoJSON(ST_Intersection(s1.path, s2.path)), ST_AsGeoJSON(s2.path) from streetpath s1, streetpath s2 where s1.pathid = 148 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path));
+	rows, err := Connection.Query("select s2.pathid, s2.name, s2.type, ST_AsGeoJSON(ST_Intersection(s1.path, s2.path)), ST_AsGeoJSON(s2.path) from streetpath s1, streetpath s2 where s1.pathid = $1 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path))", street.PathID)
 	if err != nil {
 		log.Fatal("Error on getting Intersections: %s", err.Error())
 	}
@@ -108,19 +108,20 @@ func GetStreetIntersections(street *Street) (intersections []Intersection) {
 	for rows.Next() {
 
 		var newIntersection Intersection
-		var geometrys string
 
-		err := rows.Scan(&newIntersection.Street.PathID, &newIntersection.Street.Name, &newIntersection.Street.StreetType, &geometrys)
+		var geometrys string
+		var intersectionCoordinate string
+
+		err := rows.Scan(&newIntersection.Street.PathID, &newIntersection.Street.Name, &newIntersection.Street.StreetType, &intersectionCoordinate,&geometrys)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		if street.PathID != newIntersection.Street.PathID {
 			newIntersection.Street.SetPathFromGeoJSON(geometrys)
-			newIntersection.Coordinate = IntersectionFromPaths(newIntersection.Street.Path, street.Path)
+			newIntersection.SetCoordinationFromGeoJSON(intersectionCoordinate)
 			intersections = append(intersections, newIntersection)
 		}
-
 	}
 
 	return intersections

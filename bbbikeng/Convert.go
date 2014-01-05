@@ -36,6 +36,19 @@ func ConvertLatinToUTF8(iso8859_1_buf []byte) string {
 
 }
 
+func ConvertGeoJSONtoPoint(jsonInput string) (point Point) {
+
+	var coordinates GeoJSONPoint
+
+	err := json.Unmarshal([]byte(jsonInput), &coordinates)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return MakeNewPoint(coordinates.Coordinates[1], coordinates.Coordinates[0])
+
+}
+
 func ConvertGeoJSONtoPath(jsonInput string) (path []Point) {
 
 	var coordinates GeoJSON
