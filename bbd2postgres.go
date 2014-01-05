@@ -19,6 +19,8 @@ import (
 	"strings"
 )
 
+// go run bbd2postgres.go --path=/Users/DocterD/Development/bbbikeng/bbbike/data
+
 var dataPathFlag = flag.String("path", "", "bbbike data path")
 
 const untitled = "untitled path"

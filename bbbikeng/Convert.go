@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"log"
+	"math"
 )
 
 const X0 = -780761.760862528
@@ -45,10 +46,7 @@ func ConvertGeoJSONtoPath(jsonInput string) (path []Point) {
 	}
 
 	for _, coord := range coordinates.Coordinates {
-		var newPoint Point
-		newPoint.Lat = coord[1]
-		newPoint.Lng = coord[0]
-		path = append(path, newPoint)
+		path = append(path, MakeNewPoint(coord[1], coord[0]))
 	}
 
 	return path
@@ -79,6 +77,13 @@ func ConvertPathToGeoJSON(path []Point)(jsonOutput string) {
 	return string(jsonData)
 }
 
+
+func geoJsonInsert(geoJson string) (statement string) {
+
+	return ("ST_TRANSFORM(ST_GeomFromGeoJSON('"+ geoJson + "'),3857)")
+
+}
+
 func preparePointsForDatabase(points []Point) (preparedPoints string) {
 
 	for i, point := range points {
@@ -93,4 +98,18 @@ func preparePointsForDatabase(points []Point) (preparedPoints string) {
 
 	}
 	return ("ST_GeomFromText('LINESTRING(" + preparedPoints + ")', 4326)")
+}
+
+func Round(val float64, prec int) float64 {
+
+	var rounder float64
+	intermed := val * math.Pow(10, float64(prec))
+
+	if val <= 0.5 {
+		rounder = math.Ceil(intermed)
+	} else {
+		rounder = math.Floor(intermed)
+	}
+
+	return rounder / math.Pow(10, float64(prec))
 }

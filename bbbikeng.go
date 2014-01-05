@@ -14,14 +14,16 @@ func main() {
 	bbbikeng.ConnectToDatabase()
 	defer bbbikeng.Connection.Close()
 
-	testPlacePoint1 := bbbikeng.MakeNewPoint("52.551080", "13.373370")
-	testPlacePoint2 := bbbikeng.MakeNewPoint("52.492491", "13.428981")
-	bbbikeng.CalculateRoute(testPlacePoint1, testPlacePoint2)
-
 	handler := rest.ResourceHandler{}
 	handler.SetRoutes(
 		rest.Route{"GET", "/search/:name", Search},
 	)
+
+
+	firstStreet := bbbikeng.GetStreetFromId(148)
+
+	fmt.Println("FIrstStreet:", firstStreet)
+
 	http.ListenAndServe(":8080", &handler)
 
 }

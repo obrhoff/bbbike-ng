@@ -1,7 +1,6 @@
 package bbbikeng
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 )
@@ -9,7 +8,6 @@ import (
 type Route struct {
 }
 
-var found bool
 
 func CalculateRoute(startPoint Point, endPoint Point) (route Route) {
 
@@ -25,28 +23,9 @@ func CalculateRoute(startPoint Point, endPoint Point) (route Route) {
 	fmt.Println("Correction Start Point:", startStreetPoint)
 	fmt.Println("Correction End Point:", endStreetPoint)
 
-	startIntersections := GetStreetIntersections(startStreet)
-	endIntersections := GetStreetIntersections(endStreet)
-
-	fmt.Println("Start Intersections:", startIntersections)
-	fmt.Println("End Intersections", endIntersections)
 
 	return route
 
 }
 
-func starSearch(startStreet Street, lastStreet Street, endStreet Street, result chan []Street, db *sql.DB) {
 
-	if lastStreet.PathID == endStreet.PathID {
-		return
-	}
-
-	nextIntersections := GetStreetIntersections(startStreet)
-	for _, nextStreet := range nextIntersections {
-		if nextStreet.PathID != startStreet.PathID && nextStreet.PathID != lastStreet.PathID {
-			log.Println("From Start:", nextStreet.Name, "To:", lastStreet.Name)
-			starSearch(nextStreet, startStreet, endStreet, result, db)
-		}
-	}
-
-}

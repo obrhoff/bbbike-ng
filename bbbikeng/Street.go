@@ -1,5 +1,6 @@
 package bbbikeng
 
+
 type Street struct {
 	PathID     int
 	Name       string
@@ -18,3 +19,17 @@ type Attributes struct {
 	Quality       string
 	TrafficLights string
 }
+
+func (f *Street) SetIntersections(){
+	f.Intersections = GetStreetIntersections(f)
+}
+
+func (f *Street) SetPathFromGeoJSON(jsonInput string) {
+	f.Path = ConvertGeoJSONtoPath(jsonInput)
+}
+
+func (f Street) GetGeoJSONPath() (jsonOutput string) {
+	return ConvertPathToGeoJSON(f.Path)
+}
+
+

@@ -17,24 +17,46 @@ type GeoJSON struct {
 	Coordinates [][2]float64
 }
 
-func MakeNewPoint(lat string, lng string) (newPoint Point) {
+func (f *Point) SetLat(lat float64){
+	f.Lat = Round(lat, 6)
+}
 
-	xPath, err := strconv.ParseFloat(lat, 64)
-	yPath, err := strconv.ParseFloat(lng, 64)
+func (f *Point) SetLng(lng float64){
+	f.Lng = Round(lng, 6)
+}
+
+func (f *Point) Coordinates()(lat float64, lng float64) {
+	return f.Lat, f.Lng
+}
+
+func (f *Point) Compare(comparePoint Point) (equal bool) {
+	thresholdLat := math.Abs(f.Lat) - math.Abs(comparePoint.Lat)
+	thresholdLng := math.Abs(f.Lng) - math.Abs(comparePoint.Lng)
+	return (thresholdLat <= 0.0000001 && thresholdLng <= 0.0000001)
+}
+
+func MakeNewPoint(lat float64, lng float64) (newPoint Point) {
+
+	newPoint.SetLat(lat)
+	newPoint.SetLng(lng)
+	return newPoint
+
+}
+
+func MakeNewPointFromString(lat string, lng string) (newPoint Point) {
+
+	xPath, err := strconv.ParseFloat(lng, 64)
+	yPath, err := strconv.ParseFloat(lat, 64)
 	if err != nil {
 		panic(err)
 	}
-
-	newPoint.Lat = xPath
-	newPoint.Lng = yPath
-
-	return newPoint
+	return MakeNewPoint(xPath, yPath)
 }
 
-func PointLatitudeLongitudeAsString(point Point) (lat string, lng string) {
+func (f *Point) LatitudeLongitudeAsString() (lat string, lng string) {
 
-	lat = strconv.FormatFloat(point.Lat, 'f', 6, 64)
-	lng = strconv.FormatFloat(point.Lng, 'f', 6, 64)
+	lat = strconv.FormatFloat(f.Lat, 'f', 6, 64)
+	lng = strconv.FormatFloat(f.Lng, 'f', 6, 64)
 
 	return lat, lng
 
@@ -52,6 +74,7 @@ func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters int) 
 
 }
 
+/*
 func PathFromIntersectionToIntersection(entranceIntersection Point, exitIntersection Point, street Street) (points []Point) {
 
 	var beginningIndex int
@@ -61,6 +84,7 @@ func PathFromIntersectionToIntersection(entranceIntersection Point, exitIntersec
 
 		firstPoint := points[i]
 		secondPoint := points[i+1]
+
 		if IsBeetweenLine(firstPoint, secondPoint, entranceIntersection) {
 			beginningIndex = i + 1
 		}
@@ -76,43 +100,85 @@ func PathFromIntersectionToIntersection(entranceIntersection Point, exitIntersec
 	points = append(points, exitIntersection)
 	return points
 
-}
-
-/*
-func IntersectionFromLines(firstLine [2]Point, secondLine [2]Point) (intersection Point) {
-
-
-		firstPointSegment1 := firstLine[0]
-		secondPointSegment1 := firstLine[1]
-
-		firstPointSegment2 := secondLine[0]
-		secondPointSegment2 := secondLine[1]
-
-		d := (firstPointSegment1.Lng-secondPointSegment1.Lng)*(firstPointSegment2.Lat-secondPointSegment2.Lat) - (firstPointSegment1.Lat-secondPointSegment1.Lat)*(firstPointSegment2.Lng-secondPointSegment2.Lng)
-
-		var newPoint Point
-		newPoint.Lng = 	(firstPointSegment2.Lng - secondPointSegment2.Lng) * (firstPointSegment1.Lng * secondPointSegment1.Lat - firstPointSegment1.Lat * secondPointSegment1.Lng) *
-						(firstPointSegment2.Lng * secondPointSegment2.Lat) - (firstPointSegment2.Lng * secondPointSegment2.Lat - firstPointSegment2.Lat * secondPointSegment2.Lng )) / d
-
-
-		//    int yi = ((y3-y4)*(x1*y2-y1*x2)-(y1-y2)*(x3*y4-y3*x4))/d;
-
-	return newPoint
-
 } */
 
-func IsBeetweenLine(firstSegment Point, secondSegment Point, point Point) (result bool) {
+func BearingBetweenPoints(firstSegment Point, secondSegment Point) (angle float64) {
 
-	product := (point.Lng-firstSegment.Lng)*(point.Lng-secondSegment.Lng) + (point.Lat-firstSegment.Lat)*(point.Lat-secondSegment.Lat)
+	_, dLng := pointDifference(firstSegment, secondSegment)
 
-	if product > 0 {
-		result = true
-	} else {
-		result = false
+	y := math.Sin(dLng) * math.Cos(secondSegment.Lat)
+	x := math.Cos(firstSegment.Lat) * math.Sin(secondSegment.Lat) - math.Sin(firstSegment.Lat) * math.Cos(secondSegment.Lat) * math.Cos(dLng)
+
+	return radiansToDegrees(math.Atan2(y, x))
+}
+
+func IntersectionFromLines(firstLine [2]Point, secondLine [2]Point) (intersection Point, valid bool) {
+
+	firstLineFirstPoint := firstLine[0]
+	firstLineSecondPoint := firstLine[1]
+	secondLineFirstPoint := secondLine[0]
+	secondLineSecondPoint := secondLine[1]
+
+	A1 := firstLineSecondPoint.Lat - firstLineFirstPoint.Lat
+	B1 := firstLineFirstPoint.Lng - firstLineSecondPoint.Lng
+	C1 := A1 * firstLineFirstPoint.Lng + B1 * firstLineFirstPoint.Lat
+
+	A2 := secondLineSecondPoint.Lat - secondLineFirstPoint.Lat
+	B2 := secondLineFirstPoint.Lng - secondLineSecondPoint.Lng
+	C2 := A2 * secondLineFirstPoint.Lng + B2 * secondLineFirstPoint.Lat
+
+	determinate := A1 * B2 - A2 * B1
+
+	if determinate != 0 {
+		intersection.SetLat((A1 * C2 - A2 * C1) / determinate)
+		intersection.SetLng((B2 * C1 - B1 * C2) / determinate)
 	}
 
-	return result
+	return intersection, valid
 
+}
+
+func IntersectionFromPaths(firstPath []Point, secondPath []Point) (intersection Point){
+
+	for innerIndex := 0; innerIndex < len(firstPath)-1; innerIndex++ {
+
+		firstPathFirstPoint := firstPath[innerIndex]
+		firstPathSecondPoint := firstPath[innerIndex+1]
+
+		for outerIndex := 0; outerIndex < len(secondPath)-1; outerIndex++ {
+
+			secondPathFirstPoint := secondPath[outerIndex]
+			secondPathSecondPoint := secondPath[outerIndex+1]
+
+			var firstLine [2]Point
+			var secondLine [2]Point
+
+			firstLine[0] = firstPathFirstPoint
+			firstLine[1] = firstPathSecondPoint
+
+			secondLine[0] = secondPathFirstPoint
+			secondLine[1] = secondPathSecondPoint
+
+			var foundIntersection Point
+			foundIntersection, _ = IntersectionFromLines(firstLine, secondLine)
+
+			if isBoundedBox(firstPathFirstPoint, firstPathSecondPoint, foundIntersection) && isBoundedBox(secondPathFirstPoint, secondPathSecondPoint, foundIntersection) {
+				if foundIntersection.Compare(firstPathFirstPoint) {
+					return firstPathFirstPoint
+				} else if foundIntersection.Compare(firstPathSecondPoint) {
+					return firstPathSecondPoint
+				} else if foundIntersection.Compare(secondPathFirstPoint) {
+					return secondPathFirstPoint
+				} else if foundIntersection.Compare(secondPathSecondPoint) {
+					return secondPathSecondPoint
+				} else {
+					return foundIntersection
+				}
+			}
+		}
+	}
+
+	return intersection
 }
 
 func DistanceFromLinePoint(points []Point) (distance int) {
@@ -121,6 +187,33 @@ func DistanceFromLinePoint(points []Point) (distance int) {
 		firstPoint := points[i]
 		secondPoint := points[i+1]
 		distance += DistanceFromPointToPoint(firstPoint, secondPoint)
+	}
+
+	return distance
+
+}
+
+func DistanceFromPointToPath(point Point, path []Point) (distance int) {
+
+	distance = -1
+	for i := 0; i < len(path)-1; i++ {
+
+		firstPoint := path[i]
+		secondPoint := path[i+1]
+		magnitude := magnitude(secondPoint, firstPoint)
+
+		U := (((point.Lat - firstPoint.Lat) * (secondPoint.Lat - firstPoint.Lat)) * ((point.Lng - firstPoint.Lng) * (secondPoint.Lng - firstPoint.Lng))) / math.Pow(magnitude, 2)
+		if U > 0.0 || U < 1.0 {
+			var newIntersection Point
+			newIntersection.Lat = firstPoint.Lat + U*(secondPoint.Lat-firstPoint.Lat)
+			newIntersection.Lng = firstPoint.Lng + U*(secondPoint.Lng-firstPoint.Lng)
+
+			lastDistance := DistanceFromPointToPoint(point, newIntersection)
+			if lastDistance > distance || lastDistance <= 0 {
+				distance = lastDistance
+			}
+		}
+
 	}
 
 	return distance
@@ -139,9 +232,8 @@ func IntersectionFromPointToStreet(street Street, point Point) (intersection Poi
 
 		U := (((point.Lat - firstPoint.Lat) * (secondPoint.Lat - firstPoint.Lat)) * ((point.Lng - firstPoint.Lng) * (secondPoint.Lng - firstPoint.Lng))) / math.Pow(magnitude, 2)
 		if U > 0.0 || U < 1.0 {
-			var newIntersection Point
-			newIntersection.Lat = firstPoint.Lat + U*(secondPoint.Lat-firstPoint.Lat)
-			newIntersection.Lng = firstPoint.Lng + U*(secondPoint.Lng-firstPoint.Lng)
+
+			newIntersection := MakeNewPoint(firstPoint.Lat + U*(secondPoint.Lat-firstPoint.Lat),firstPoint.Lng + U*(secondPoint.Lng-firstPoint.Lng))
 
 			distance := DistanceFromPointToPoint(point, newIntersection)
 			if lastDistance > distance || lastDistance <= 0 {
@@ -163,5 +255,64 @@ func magnitude(firstPoint Point, secondPoint Point) (magnitude float64) {
 	newPoint.Lng = secondPoint.Lng - secondPoint.Lng
 
 	return math.Sqrt(math.Pow(newPoint.Lat, 2) + math.Pow(newPoint.Lng, 2))
+
+}
+
+func isOnLine(point Point, line [2]Point) (onLine bool) {
+
+	endPoint1 := line[0]
+	endPoint2 := line[1]
+
+	/*    return (((double)checkPoint.Y - endPoint1.Y)) / ((double)(checkPoint.X - endPoint1.X))
+        == ((double)(endPoint2.Y - endPoint1.Y)) / ((double)(endPoint2.X - endPoint1.X));*/
+
+
+	return ((point.Lat - endPoint1.Lat)) / ((point.Lng - endPoint1.Lng)) == ((point.Lat - endPoint2.Lat)) / ((point.Lng - endPoint2.Lng));
+}
+
+func isBoundedBox(firstPoint Point, secondPoint Point, checkPoint Point) (isBounded bool) {
+
+	var upLatitude float64
+	var downLatitude float64
+	var upLongitude float64
+	var downLongitude float64
+
+	if firstPoint.Lat >= secondPoint.Lat {
+		upLatitude = firstPoint.Lat
+		downLatitude = secondPoint.Lat
+	} else {
+		upLatitude = secondPoint.Lat
+		downLatitude = firstPoint.Lat
+	}
+	if firstPoint.Lng >= secondPoint.Lng {
+		upLongitude = firstPoint.Lng
+		downLongitude = secondPoint.Lng
+	} else {
+		upLongitude = secondPoint.Lng
+		downLongitude = firstPoint.Lng
+	}
+
+	return (upLatitude - checkPoint.Lat <= upLatitude - downLatitude &&  upLongitude - checkPoint.Lng <= upLongitude - downLongitude)
+
+}
+
+func pointDifference(firstPoint Point, secondPoint Point) (dLat float64, dLon float64) {
+
+
+	dLat = secondPoint.Lat - firstPoint.Lat
+	dLon = secondPoint.Lat - firstPoint.Lat
+
+	return dLat, dLon
+
+}
+
+func degreeToRadians(degree float64) (radians float64){
+
+	return (degree * math.Pi / 180)
+}
+
+func radiansToDegrees(radians float64) ( degrees float64) {
+
+	return (radians * 180 / math.Pi)
 
 }
