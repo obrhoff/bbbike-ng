@@ -13,6 +13,9 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"encoding/json"
+	"os"
+	"io/ioutil"
 )
 
 const user = "root"
@@ -22,6 +25,16 @@ const port = "5433"
 const database = "bbbikeng"
 
 var Connection *sql.DB
+
+// connectionParameter := fmt.Sprint("user=", user, " password=", password, " host=", host, " port=", port, " dbname=", database)
+
+type Config struct {
+	User string
+	Password string
+	Host string
+	Port string
+	Database string
+}
 
 func InsertStreetToDatabase(street Street) {
 
@@ -237,7 +250,15 @@ func SearchForNearestCyclepathFromPoint(point Point) (cyclepath Street) {
 
 func ConnectToDatabase() {
 
-	connectionParameter := fmt.Sprint("user=", user, " password=", password, " host=", host, " port=", port, " dbname=", database)
+	file, e := ioutil.ReadFile("./config.json")
+	if e != nil {
+		fmt.Printf("File error: %v\n", e)
+		os.Exit(1)
+	}
+
+	var newConfig Config
+	json.Unmarshal(file, &newConfig)
+	connectionParameter := fmt.Sprint("user=", newConfig.User, " password=", newConfig.Password, " host=", newConfig.Host, " port=", newConfig.Port, " dbname=", newConfig.Database)
 	log.Println("Connecting to Database:", connectionParameter)
 
 	var err error

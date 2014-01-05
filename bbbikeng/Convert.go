@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"log"
 	"math"
-	"fmt"
 )
 
 const X0 = -780761.760862528
