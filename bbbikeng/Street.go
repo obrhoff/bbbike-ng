@@ -1,5 +1,13 @@
 package bbbikeng
 
+type City struct {
+
+	CityID int
+	Name string
+	Country string
+	Border []Point
+}
+
 type Street struct {
 	PathID     int
 	Name       string

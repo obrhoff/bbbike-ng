@@ -19,6 +19,13 @@ import (
 	"strings"
 )
 
+type Generic struct {
+	ID		int
+	Name	string
+	Type 	string
+	Path	[]bbbikeng.Point
+}
+
 // go run bbd2postgres.go --path=/Users/DocterD/Development/bbbikeng/bbbike/data
 
 var dataPathFlag = flag.String("path", "", "bbbike data path")
@@ -29,7 +36,7 @@ const coordinateRegex = "[0-9]+,[0-9]+"
 const nameRegex = "^(.*)(\t)"
 const typeRegex = "\t+(.*?)\\s+"
 
-func readLines(path string, fileName string) ([]bbbikeng.Street, error) {
+func readLines(path string, fileName string) ([]Generic, error) {
 
 	file, err := os.Open(path + "/" + fileName)
 	if err != nil {
@@ -37,16 +44,16 @@ func readLines(path string, fileName string) ([]bbbikeng.Street, error) {
 	}
 	defer file.Close()
 
-	var streets []bbbikeng.Street
 	scanner := bufio.NewScanner(file)
-
 	nameRegex := regexp.MustCompile(nameRegex)
 	typeRegex := regexp.MustCompile(typeRegex)
 	coordsRegex := regexp.MustCompile(coordinateRegex)
 
+	var newGenerics []Generic
+
 	for scanner.Scan() {
 
-		var newStreet bbbikeng.Street
+		var newGeneric Generic
 
 		infoLine := scanner.Text()
 		infoLineConverted := bbbikeng.ConvertLatinToUTF8([]byte(infoLine))
@@ -61,8 +68,8 @@ func readLines(path string, fileName string) ([]bbbikeng.Street, error) {
 				name = untitled
 			}
 
-			newStreet.Name = strings.TrimSpace(name)
-			newStreet.StreetType = strings.TrimSpace(streetType)
+			newGeneric.Name = strings.TrimSpace(name)
+			newGeneric.Type = strings.TrimSpace(streetType)
 
 			for _, coord := range coords {
 				splittedCoords := strings.Split(coord, ",")
@@ -77,23 +84,27 @@ func readLines(path string, fileName string) ([]bbbikeng.Street, error) {
 				lat, lng := bbbikeng.ConvertStandardToWGS84(yPath, xPath)
 				point.Lat = lat
 				point.Lng = lng
-				newStreet.Path = append(newStreet.Path, point)
+				newGeneric.Path = append(newGeneric.Path, point)
 
 			}
 
-			streets = append(streets, newStreet)
+			newGenerics = append(newGenerics, newGeneric)
 		}
 
 	}
 
-	return streets, scanner.Err()
+	return newGenerics, scanner.Err()
 }
 
 func parseData(path string) {
 
 	fmt.Println("Parsing Pathdata.")
+	//citys, fileErr := readLines(path, "Berlin")
 	streets, fileErr := readLines(path, "strassen")
 	cyclepaths, fileErr := readLines(path, "radwege")
+
+	greens, fileErr := readLines(path, "green")
+	qualitys, fileErr := readLines(path, "qualitaet_s")
 
 	if fileErr != nil {
 		log.Fatalf("Failed reading Strassen File: %s", fileErr)
@@ -102,14 +113,50 @@ func parseData(path string) {
 	bbbikeng.ConnectToDatabase()
 	defer bbbikeng.Connection.Close()
 
+	/*
+	for i, city := range citys {
+		var newCity bbbikeng.City
+		newCity.CityID = i
+		newCity.Name = city.Name
+		newCity.Border = city.Path
+		bbbikeng.InsertCityToDatabase(newCity)
+	} */
+
+
 	for i, cyclepath := range cyclepaths {
-		cyclepath.PathID = i
-		bbbikeng.InsertCyclePathToDatabase(cyclepath)
+		var newCyclepath bbbikeng.Street
+		newCyclepath.PathID = i
+		newCyclepath.Name = cyclepath.Name
+		newCyclepath.StreetType = cyclepath.Type
+		newCyclepath.Path = cyclepath.Path
+		bbbikeng.InsertCyclePathToDatabase(newCyclepath)
 	}
 
 	for i, street := range streets {
-		street.PathID = i
-		bbbikeng.InsertStreetToDatabase(street)
+		var newStreet bbbikeng.Street
+		newStreet.PathID = i
+		newStreet.Name = street.Name
+		newStreet.StreetType = street.Type
+		newStreet.Path = street.Path
+		bbbikeng.InsertStreetToDatabase(newStreet)
+	}
+
+	for i, green := range greens {
+		var newGreen bbbikeng.Street
+		newGreen.PathID = i
+		newGreen.Name = green.Name
+		newGreen.StreetType = green.Type
+		newGreen.Path = green.Path
+		bbbikeng.InsertGreenToDatabase(newGreen)
+	}
+
+	for i, quality := range qualitys {
+		var newQuality bbbikeng.Street
+		newQuality.PathID = i
+		newQuality.Name = quality.Name
+		newQuality.StreetType = quality.Type
+		newQuality.Path = quality.Path
+		bbbikeng.InsertQualityToDatabase(newQuality)
 	}
 
 }
