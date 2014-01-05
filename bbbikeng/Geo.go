@@ -3,6 +3,7 @@ package bbbikeng
 import (
 	"math"
 	"strconv"
+	"fmt"
 )
 
 const RADIUS = 6368500.0
@@ -69,41 +70,61 @@ func (f *Point) LatitudeLongitudeAsString() (lat string, lng string) {
 
 func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters int) {
 
-	firstLatitude := firstPoint.Lat * math.Pi / 180
-	firstLongitude := firstPoint.Lng * math.Pi / 180
+	dLat, dLon := pointDifference(firstPoint, secondPoint)
+	dLat = degreeToRadians(dLat)
+	dLon = degreeToRadians(dLon)
 
-	secondLatitude := secondPoint.Lat * math.Pi / 180
-	secondLongitude := secondPoint.Lng * math.Pi / 180
+	lat1 := degreeToRadians(firstPoint.Lat)
+	lat2 := degreeToRadians(secondPoint.Lat)
 
-	return int(math.Acos(math.Sin(firstLatitude)*math.Sin(secondLatitude)+math.Cos(firstLatitude)*math.Cos(secondLatitude)*math.Cos((secondLongitude-firstLongitude))) * RADIUS)
+	a := math.Sin(dLat/2) * math.Sin(dLat/2) + math.Sin(dLon/2) * math.Sin(dLon/2) * math.Cos(lat1) * math.Cos(lat2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	d := RADIUS * c
+
+	return int(d)
 
 }
 
 
-func PathFromIntersectionToIntersection(entranceIntersection Point, exitIntersection Point, street Street) (points []Point) {
+func PathFromIntersectionToIntersection(entranceIntersection Point, exitIntersection Point, street Street) (points []Point, distance int) {
 
 	var beginningIndex int
 	var endingIndex int
 
-	for i := 0; i < len(street.Path)-1; i++ {
-
-		firstPoint := points[i]
-		secondPoint := points[i+1]
-		if isBoundedBox(firstPoint, secondPoint, entranceIntersection) {
-			beginningIndex = i + 1
-		} else if isBoundedBox(firstPoint, secondPoint, exitIntersection) {
-			endingIndex = i - 1
+	if !entranceIntersection.Compare(exitIntersection) {
+		for i := 1; i < len(street.Path)-1; i++ {
+			firstPoint := street.Path[i]
+			secondPoint := street.Path[i+1]
+			if isBoundedBox(firstPoint, secondPoint, entranceIntersection) {
+				beginningIndex = i
+			} else if isBoundedBox(firstPoint, secondPoint, exitIntersection) {
+				endingIndex = i
+			}
 		}
+
+		fmt.Println("FirstIndex:", beginningIndex)
+		fmt.Println("LastIndex:", endingIndex)
+
+		points = append(points, entranceIntersection)
+
+		if beginningIndex < endingIndex {
+			for i := beginningIndex; i > endingIndex; i++ {
+				points = append(points, street.Path[i])
+			}
+		} else {
+			for i := beginningIndex; endingIndex < i ; i-- {
+				points = append(points, street.Path[i])
+			}
+		}
+		points = append(points, exitIntersection)
+	} else {
+		points = append(points, exitIntersection)
 	}
 
-	points = append(points, entranceIntersection)
-	for i := beginningIndex; i < endingIndex; i++ {
-		points = append(points, points[i])
-	}
-	points = append(points, exitIntersection)
-	return points
+	return points, DistanceFromLinePoint(points)
 
 }
+
 
 func BearingBetweenPoints(firstSegment Point, secondSegment Point) (angle float64) {
 
@@ -115,76 +136,11 @@ func BearingBetweenPoints(firstSegment Point, secondSegment Point) (angle float6
 	return radiansToDegrees(math.Atan2(y, x))
 }
 
-func IntersectionFromLines(firstLine [2]Point, secondLine [2]Point) (intersection Point, valid bool) {
-
-	firstLineFirstPoint := firstLine[0]
-	firstLineSecondPoint := firstLine[1]
-	secondLineFirstPoint := secondLine[0]
-	secondLineSecondPoint := secondLine[1]
-
-	A1 := firstLineSecondPoint.Lat - firstLineFirstPoint.Lat
-	B1 := firstLineFirstPoint.Lng - firstLineSecondPoint.Lng
-	C1 := A1 * firstLineFirstPoint.Lng + B1 * firstLineFirstPoint.Lat
-
-	A2 := secondLineSecondPoint.Lat - secondLineFirstPoint.Lat
-	B2 := secondLineFirstPoint.Lng - secondLineSecondPoint.Lng
-	C2 := A2 * secondLineFirstPoint.Lng + B2 * secondLineFirstPoint.Lat
-
-	determinate := A1 * B2 - A2 * B1
-
-	if determinate != 0 {
-		intersection.SetLat((A1 * C2 - A2 * C1) / determinate)
-		intersection.SetLng((B2 * C1 - B1 * C2) / determinate)
-	}
-
-	return intersection, valid
-
-}
-
-func IntersectionFromPaths(firstPath []Point, secondPath []Point) (intersection Point){
-
-	for innerIndex := 0; innerIndex < len(firstPath)-1; innerIndex++ {
-
-		firstPathFirstPoint := firstPath[innerIndex]
-		firstPathSecondPoint := firstPath[innerIndex+1]
-
-		for outerIndex := 0; outerIndex < len(secondPath)-1; outerIndex++ {
-
-			secondPathFirstPoint := secondPath[outerIndex]
-			secondPathSecondPoint := secondPath[outerIndex+1]
-
-			var firstLine [2]Point
-			var secondLine [2]Point
-
-			firstLine[0] = firstPathFirstPoint
-			firstLine[1] = firstPathSecondPoint
-
-			secondLine[0] = secondPathFirstPoint
-			secondLine[1] = secondPathSecondPoint
-
-			foundIntersection, _ := IntersectionFromLines(firstLine, secondLine)
-			if isBoundedBox(firstPathFirstPoint, firstPathSecondPoint, foundIntersection) && isBoundedBox(secondPathFirstPoint, secondPathSecondPoint, foundIntersection) {
-				if foundIntersection.Compare(firstPathFirstPoint) {
-					return firstPathFirstPoint
-				} else if foundIntersection.Compare(firstPathSecondPoint) {
-					return firstPathSecondPoint
-				} else if foundIntersection.Compare(secondPathFirstPoint) {
-					return secondPathFirstPoint
-				} else if foundIntersection.Compare(secondPathSecondPoint) {
-					return secondPathSecondPoint
-				} else {
-					return foundIntersection
-				}
-			}
-		}
-	}
-
-	return intersection
-}
 
 func DistanceFromLinePoint(points []Point) (distance int) {
 
 	for i := 0; i < len(points)-1; i++ {
+
 		firstPoint := points[i]
 		secondPoint := points[i+1]
 		distance += DistanceFromPointToPoint(firstPoint, secondPoint)
@@ -257,18 +213,6 @@ func magnitude(firstPoint Point, secondPoint Point) (magnitude float64) {
 
 	return math.Sqrt(math.Pow(newPoint.Lat, 2) + math.Pow(newPoint.Lng, 2))
 
-}
-
-func isOnLine(point Point, line [2]Point) (onLine bool) {
-
-	endPoint1 := line[0]
-	endPoint2 := line[1]
-
-	/*    return (((double)checkPoint.Y - endPoint1.Y)) / ((double)(checkPoint.X - endPoint1.X))
-        == ((double)(endPoint2.Y - endPoint1.Y)) / ((double)(endPoint2.X - endPoint1.X));*/
-
-
-	return ((point.Lat - endPoint1.Lat)) / ((point.Lng - endPoint1.Lng)) == ((point.Lat - endPoint2.Lat)) / ((point.Lng - endPoint2.Lng));
 }
 
 func isBoundedBox(firstPoint Point, secondPoint Point, checkPoint Point) (isBounded bool) {

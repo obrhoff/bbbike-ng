@@ -1,9 +1,5 @@
 package bbbikeng
 
-import (
-	"fmt"
-)
-
 type Street struct {
 	PathID     int
 	Name       string
@@ -37,6 +33,5 @@ func (f Street) GetGeoJSONPath() (jsonOutput string) {
 
 func (f *Intersection) SetCoordinationFromGeoJSON(jsonInput string) {
 	f.Coordinate = ConvertGeoJSONtoPoint(jsonInput)
-	fmt.Println("Converting", f.Coordinate)
 }
 
