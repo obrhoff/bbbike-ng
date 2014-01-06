@@ -1,16 +1,8 @@
-/**
- * Created by IntelliJ IDEA.
- * User: DocterD
- * Date: 28/12/13
- * Time: 11:19
- * To change this template use File | Settings | File Templates.
- */
-package main
+package Import
 
 import (
-	"./bbbikeng"
+	"../bbbikeng"
 	"bufio"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -26,9 +18,8 @@ type Generic struct {
 	Path	[]bbbikeng.Point
 }
 
-// go run bbd2postgres.go --path=/Users/DocterD/Development/bbbikeng/bbbike/data
 
-var dataPathFlag = flag.String("path", "", "bbbike data path")
+// go run bbd2postgres.go --path=/Users/DocterD/Development/bbbikeng/bbbike/data
 
 const untitled = "untitled path"
 
@@ -96,7 +87,7 @@ func readLines(path string, fileName string) ([]Generic, error) {
 	return newGenerics, scanner.Err()
 }
 
-func parseData(path string) {
+func ParseData(path string) {
 
 	fmt.Println("Parsing Pathdata.")
 	//citys, fileErr := readLines(path, "Berlin")
@@ -110,9 +101,6 @@ func parseData(path string) {
 		log.Fatalf("Failed reading Strassen File: %s", fileErr)
 	}
 
-	bbbikeng.ConnectToDatabase()
-	defer bbbikeng.Connection.Close()
-
 	/*
 	for i, city := range citys {
 		var newCity bbbikeng.City
@@ -122,6 +110,14 @@ func parseData(path string) {
 		bbbikeng.InsertCityToDatabase(newCity)
 	} */
 
+	for i, street := range streets {
+		var newStreet bbbikeng.Street
+		newStreet.PathID = i
+		newStreet.Name = street.Name
+		newStreet.StreetType = street.Type
+		newStreet.Path = street.Path
+		bbbikeng.InsertStreetToDatabase(newStreet)
+	}
 
 	for i, cyclepath := range cyclepaths {
 		var newCyclepath bbbikeng.Street
@@ -132,14 +128,7 @@ func parseData(path string) {
 		bbbikeng.InsertCyclePathToDatabase(newCyclepath)
 	}
 
-	for i, street := range streets {
-		var newStreet bbbikeng.Street
-		newStreet.PathID = i
-		newStreet.Name = street.Name
-		newStreet.StreetType = street.Type
-		newStreet.Path = street.Path
-		bbbikeng.InsertStreetToDatabase(newStreet)
-	}
+
 
 	for i, green := range greens {
 		var newGreen bbbikeng.Street
@@ -158,13 +147,5 @@ func parseData(path string) {
 		newQuality.Path = quality.Path
 		bbbikeng.InsertQualityToDatabase(newQuality)
 	}
-
-}
-
-func main() {
-
-	flag.Parse()
-	println("Data dir is: ", *dataPathFlag)
-	parseData(*dataPathFlag)
 
 }

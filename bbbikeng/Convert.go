@@ -81,26 +81,37 @@ func ConvertGeoJSONtoPath(jsonInput string) (path []Point) {
 		point := MakeNewPoint(coordinates.Coordinates[1], coordinates.Coordinates[0])
 		path = append(path, point)
 
+
 	}
 	return path
 }
 
 func ConvertPathToGeoJSON(path []Point)(jsonOutput string) {
 
-	var newJson GeoJSON
-	for _, point := range path {
-		var newCoordinates [2]float64
-		newCoordinates[1] = point.Lat
-		newCoordinates[0] = point.Lng
-		newJson.Coordinates = append(newJson.Coordinates, newCoordinates)
+	var jsonData []byte
+	var err error
+
+	if len(path) == 1 {
+		var newJson GeoJSONPoint
+		newJson.Type = "Point"
+		newJson.Coordinates[1] = path[0].Lat
+		newJson.Coordinates[0] = path[0].Lng
+		jsonData, err = json.Marshal(newJson)
+
+	} else {
+
+		var newJson GeoJSON
+		newJson.Type = "LineString"
+		for _, point := range path {
+			var newCoordinates [2]float64
+			newCoordinates[1] = point.Lat
+			newCoordinates[0] = point.Lng
+			newJson.Coordinates = append(newJson.Coordinates, newCoordinates)
+		}
+		jsonData, err = json.Marshal(newJson)
+
 	}
 
-	switch len(path){
-		case 1 : newJson.Type = "Point"
-		default: newJson.Type = "LineString"
-	}
-
-	jsonData, err := json.Marshal(newJson)
 	if err != nil {
 		log.Fatal("Failed to Convert Path to GeoJSON: %s", err.Error())
 	}

@@ -171,6 +171,13 @@ func GetStreetIntersections(street *Street) (intersections []Intersection) {
 		if street.PathID != newIntersection.Street.PathID {
 			newIntersection.Street.SetPathFromGeoJSON(geometrys)
 			newIntersection.SetCoordinationFromGeoJSON(intersectionCoordinate)
+
+
+			if newIntersection.Street.StreetType == "Pl" {
+				fmt.Println("NewPlace:", newIntersection.Street)
+			}
+
+
 			intersections = append(intersections, newIntersection)
 		}
 	}
@@ -199,8 +206,11 @@ func SearchForStreetName(name string) (streets []Street) {
 
 		newStreet.SetPathFromGeoJSON(geometrys)
 		newStreet.SetIntersections()
+
 		streets = append(streets, newStreet)
+
 	}
+
 
 	return streets
 }
