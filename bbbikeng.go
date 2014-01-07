@@ -5,7 +5,7 @@ import (
 	"./Import"
 	"fmt"
 	"flag"
-	"os"
+//	"os"
 	"github.com/ant0ine/go-json-rest"
 	//"log"
 	"net/http"
@@ -20,6 +20,12 @@ func main() {
 
 	flag.Parse()
 
+	bbbikeng.ConnectToDatabase()
+	defer bbbikeng.Connection.Close()
+
+	bbbikeng.Test()
+
+	/*
 	if *startFlag && !*dataImportFlag {
 		StartBBBikeServer()
 	} else if *dataImportFlag{
@@ -27,14 +33,12 @@ func main() {
 	} else {
 		fmt.Printf("--import-data --import-path=/bbbike/data\n")
 		os.Exit(1)
-	}
+	} */
 
 }
 
 func StartBBBikeServer() {
 
-	bbbikeng.ConnectToDatabase()
-	defer bbbikeng.Connection.Close()
 
 	handler := rest.ResourceHandler{}
 		handler.SetRoutes(
@@ -47,11 +51,7 @@ func StartBBBikeServer() {
 
 func StartParsingBBBikeData(path string) {
 
-	bbbikeng.ConnectToDatabase()
-	defer bbbikeng.Connection.Close()
-
 	Import.ParseData(path)
-
 
 }
 

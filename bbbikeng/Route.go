@@ -43,7 +43,15 @@ func Test(){
 	fmt.Println("Test:", test)
 	fmt.Println("Distance", distance)
 
-	fmt.Println("JSON", ConvertPathToGeoJSON(test))
+	cyclepath := GetCyclepathFromStreet(street)
+	greenways := GetGreenwaysFromStreet(street)
+	quality := GetQualityFromStreet(street)
+
+	fmt.Println("Cyclepath:", cyclepath)
+	fmt.Println("Greenways:", greenways)
+	fmt.Println("Quality:", quality)
+
+
 
 }
 

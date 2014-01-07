@@ -112,38 +112,36 @@ func ParseData(path string) {
 
 	for i, street := range streets {
 		var newStreet bbbikeng.Street
-		newStreet.PathID = i
+		newStreet.ID = i
 		newStreet.Name = street.Name
-		newStreet.StreetType = street.Type
+		newStreet.Type = street.Type
 		newStreet.Path = street.Path
 		bbbikeng.InsertStreetToDatabase(newStreet)
 	}
 
 	for i, cyclepath := range cyclepaths {
 		var newCyclepath bbbikeng.Street
-		newCyclepath.PathID = i
+		newCyclepath.ID = i
 		newCyclepath.Name = cyclepath.Name
-		newCyclepath.StreetType = cyclepath.Type
+		newCyclepath.Type = cyclepath.Type
 		newCyclepath.Path = cyclepath.Path
 		bbbikeng.InsertCyclePathToDatabase(newCyclepath)
 	}
 
-
-
 	for i, green := range greens {
 		var newGreen bbbikeng.Street
-		newGreen.PathID = i
+		newGreen.ID = i
 		newGreen.Name = green.Name
-		newGreen.StreetType = green.Type
+		newGreen.Type = green.Type
 		newGreen.Path = green.Path
 		bbbikeng.InsertGreenToDatabase(newGreen)
 	}
 
 	for i, quality := range qualitys {
 		var newQuality bbbikeng.Street
-		newQuality.PathID = i
+		newQuality.ID = i
 		newQuality.Name = quality.Name
-		newQuality.StreetType = quality.Type
+		newQuality.Type = quality.Type
 		newQuality.Path = quality.Path
 		bbbikeng.InsertQualityToDatabase(newQuality)
 	}

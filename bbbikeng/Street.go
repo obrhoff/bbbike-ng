@@ -1,19 +1,39 @@
 package bbbikeng
 
-type City struct {
 
+type basePath struct {
+	Type string
+	Path []Point
+}
+
+type advancedPath struct {
+	Name string
+	ID int
+}
+
+type City struct {
 	CityID int
 	Name string
 	Country string
-	Border []Point
+	Geometry []Point
 }
 
 type Street struct {
-	PathID     int
-	Name       string
-	StreetType string
-	Path       []Point
+	basePath
+	advancedPath
 	Intersections []Intersection
+}
+
+type Cyclepath struct {
+	basePath
+}
+
+type Quality struct {
+	basePath
+}
+
+type Greenway struct {
+	basePath
 }
 
 type Intersection struct {
@@ -31,20 +51,18 @@ func (f *Street) SetIntersections(){
 	f.Intersections = GetStreetIntersections(f)
 }
 
-func (f *Street) SetPathFromGeoJSON(jsonInput string) {
+func (f *basePath) SetPathFromGeoJSON(jsonInput string) {
 	f.Path = ConvertGeoJSONtoPath(jsonInput)
 }
 
-func (f Street) GetGeoJSONPath() (jsonOutput string) {
+func (f basePath) GetGeoJSONPath() (jsonOutput string) {
 	return ConvertPathToGeoJSON(f.Path)
 }
-
 
 func (f *Intersection) SetCoordinationFromGeoJSON(jsonInput string) {
 	point := ConvertGeoJSONtoPath(jsonInput)
 	if len(point) > 0 {
 		f.Coordinate = point[0]
 	}
-
 }
 

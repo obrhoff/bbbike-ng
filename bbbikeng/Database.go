@@ -45,7 +45,7 @@ func InsertStreetToDatabase(street Street) {
 	fmt.Println("Inserting:", street)
 	fixedName := strings.Replace(street.Name, "'", "''", -1)
 
-	query := fmt.Sprintf("INSERT INTO streetpaths(streetpathid, name, type, path) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(street.PathID), fixedName, street.StreetType, points)
+	query := fmt.Sprintf("INSERT INTO streetpaths(streetpathid, name, type, path) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(street.ID), fixedName, street.Type, points)
 	fmt.Println("Insert:", query)
 	_, err = Connection.Exec(query)
 
@@ -61,7 +61,7 @@ func InsertCyclePathToDatabase(cyclepath Street) {
 	var err error
 	//points := preparePointsForDatabase(cyclepath.Path)
 	points := geoJsonInsert(ConvertPathToGeoJSON(cyclepath.Path))
-	query := fmt.Sprintf("INSERT INTO cyclepaths(cyclepathid, type, path) VALUES (%s, '%s', %s)", strconv.Itoa(cyclepath.PathID), cyclepath.StreetType, points)
+	query := fmt.Sprintf("INSERT INTO cyclepaths(cyclepathid, type, path) VALUES (%s, '%s', %s)", strconv.Itoa(cyclepath.ID), cyclepath.Type, points)
 	fmt.Println("Insert:", query)
 
 	_, err = Connection.Exec(query)
@@ -76,7 +76,7 @@ func InsertGreenToDatabase(green Street) {
 
 	var err error
 	points := geoJsonInsert(ConvertPathToGeoJSON(green.Path))
-	query := fmt.Sprintf("INSERT INTO greenways(greenwayid, type, path) VALUES (%s, '%s', %s)", strconv.Itoa(green.PathID), green.StreetType, points)
+	query := fmt.Sprintf("INSERT INTO greenways(greenwaypathid, type, path) VALUES (%s, '%s', %s)", strconv.Itoa(green.ID), green.Type, points)
 	fmt.Println("Insert:", query)
 
 	_, err = Connection.Exec(query)
@@ -92,7 +92,7 @@ func InsertQualityToDatabase(quality Street) {
 	var err error
 	//points := preparePointsForDatabase(cyclepath.Path)
 	points := geoJsonInsert(ConvertPathToGeoJSON(quality.Path))
-	query := fmt.Sprintf("INSERT INTO qualitys(qualityid, type, path) VALUES (%s, '%s', %s)", strconv.Itoa(quality.PathID), quality.StreetType, points)
+	query := fmt.Sprintf("INSERT INTO qualitys(qualitypathid, type, path) VALUES (%s, '%s', %s)", strconv.Itoa(quality.ID), quality.Type, points)
 	fmt.Println("Insert:", query)
 
 	_, err = Connection.Exec(query)
@@ -108,8 +108,8 @@ func InsertCityToDatabase(city City) {
 
 	var err error
 	//points := preparePointsForDatabase(cyclepath.Path)
-	points := geoJsonInsert(ConvertPathToGeoJSON(city.Border))
-	query := fmt.Sprintf("INSERT INTO city(cityid, name, bounds) VALUES (%s, '%s', %s)", strconv.Itoa(city.CityID), city.Name, points)
+	points := geoJsonInsert(ConvertPathToGeoJSON(city.Geometry))
+	query := fmt.Sprintf("INSERT INTO city(citypathid, name, bounds) VALUES (%s, '%s', %s)", strconv.Itoa(city.CityID), city.Name, points)
 	fmt.Println("Insert:", query)
 
 	_, err = Connection.Exec(query)
@@ -124,7 +124,7 @@ func InsertCityToDatabase(city City) {
 func GetStreetFromId(id int) (street Street) {
 
 	var geometrys string
-	err := Connection.QueryRow("select streetpathid, name, type, ST_AsGeoJSON(path) from streetpaths where streetpathid = $1", id).Scan(&street.PathID, &street.Name, &street.StreetType, &geometrys)
+	err := Connection.QueryRow("select streetpathid, name, type, ST_AsGeoJSON(path) from streetpaths where streetpathid = $1", id).Scan(&street.ID, &street.Name, &street.Type, &geometrys)
 	if err != nil {
 		log.Fatal("Error on getting Street from ID %s", err.Error())
 	}
@@ -138,7 +138,7 @@ func GetStreetFromId(id int) (street Street) {
 func GetCyclepathFromId(id int) (cyclepath Street) {
 
 	var geometrys string
-	err := Connection.QueryRow("select cyclepathid, type, ST_AsGeoJSON(path) from cyclepaths where cyclepathid = $1", id).Scan(&cyclepath.PathID, &cyclepath.StreetType, &geometrys)
+	err := Connection.QueryRow("select cyclepathid, type, ST_AsGeoJSON(path) from cyclepaths where cyclepathid = $1", id).Scan(&cyclepath.ID, &cyclepath.Type, &geometrys)
 	if err != nil {
 		log.Fatal("Error on getting Cyclepath from ID: %s", err.Error())
 	}
@@ -151,7 +151,7 @@ func GetCyclepathFromId(id int) (cyclepath Street) {
 // returns crossing streets and intersections
 func GetStreetIntersections(street *Street) (intersections []Intersection) {
 
-	rows, err := Connection.Query("select s2.streetpathid, s2.name, s2.type, ST_AsGeoJSON(ST_Intersection(s1.path, s2.path)), ST_AsGeoJSON(s2.path) from streetpaths s1, streetpaths s2 where s1.streetpathid = $1 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path))", street.PathID)
+	rows, err := Connection.Query("select s2.streetpathid, s2.name, s2.type, ST_AsGeoJSON(ST_Intersection(s1.path, s2.path)), ST_AsGeoJSON(s2.path) from streetpaths s1, streetpaths s2 where s1.streetpathid = $1 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path))", street.ID)
 	if err != nil {
 		log.Fatal("Error on getting Intersections: %s", err.Error())
 	}
@@ -163,21 +163,14 @@ func GetStreetIntersections(street *Street) (intersections []Intersection) {
 		var geometrys string
 		var intersectionCoordinate string
 
-		err := rows.Scan(&newIntersection.Street.PathID, &newIntersection.Street.Name, &newIntersection.Street.StreetType, &intersectionCoordinate,&geometrys)
+		err := rows.Scan(&newIntersection.Street.ID, &newIntersection.Street.Name, &newIntersection.Street.Type, &intersectionCoordinate,&geometrys)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if street.PathID != newIntersection.Street.PathID {
+		if street.ID != newIntersection.Street.ID {
 			newIntersection.Street.SetPathFromGeoJSON(geometrys)
 			newIntersection.SetCoordinationFromGeoJSON(intersectionCoordinate)
-
-
-			if newIntersection.Street.StreetType == "Pl" {
-				fmt.Println("NewPlace:", newIntersection.Street)
-			}
-
-
 			intersections = append(intersections, newIntersection)
 		}
 	}
@@ -186,11 +179,87 @@ func GetStreetIntersections(street *Street) (intersections []Intersection) {
 
 }
 
+func GetCyclepathFromStreet(street Street) (cyclepaths []Cyclepath) {
+
+	rows, err := Connection.Query("select s2.type, ST_AsGeoJSON(s2.path) from streetpaths s1, cyclepaths s2 where s1.streetpathid = $1 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path))", street.ID)
+	if err != nil {
+		log.Fatal("Error on getting Cyclepaths: %s", err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var newCyclepath Cyclepath
+		var geometrys string
+		err := rows.Scan(&newCyclepath.Type, &geometrys)
+		if err != nil {
+			log.Fatal(err)
+		}
+		newCyclepath.Path = ConvertGeoJSONtoPath(geometrys)
+
+		if len(newCyclepath.Path) > 0 {
+			cyclepaths = append(cyclepaths, newCyclepath)
+		}
+
+	}
+
+	fmt.Println("Cyclepaths:", cyclepaths)
+
+	return cyclepaths
+}
+
+func GetQualityFromStreet(street Street) (qualitys []Quality) {
+
+	rows, err := Connection.Query("select s2.type, ST_AsGeoJSON(s2.path) from streetpaths s1, qualitys s2 where s1.streetpathid = $1 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path))", street.ID)
+	if err != nil {
+		log.Fatal("Error on getting Qualitys: %s", err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var newQuality Quality
+		var geometrys string
+		err := rows.Scan(&newQuality.Type, &geometrys)
+		if err != nil {
+			log.Fatal(err)
+		}
+		newQuality.Path = ConvertGeoJSONtoPath(geometrys)
+		qualitys = append(qualitys, newQuality)
+	}
+
+	fmt.Println("Quality:", qualitys)
+
+	return qualitys
+}
+
+func GetGreenwaysFromStreet(street Street) (greenways []Greenway) {
+
+	rows, err := Connection.Query("select s2.type, ST_AsGeoJSON(s2.path) from streetpaths s1, greenways s2 where s1.streetpathid = $1 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path))", street.ID)
+	if err != nil {
+		log.Fatal("Error on getting Greenways: %s", err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var newGreenway Greenway
+		var geometrys string
+		err := rows.Scan(&newGreenway.Type, &geometrys)
+		if err != nil {
+			log.Fatal(err)
+		}
+		newGreenway.Path = ConvertGeoJSONtoPath(geometrys)
+		greenways = append(greenways, newGreenway)
+	}
+
+	fmt.Println("Greenway:", greenways)
+
+	return greenways
+}
+
 func SearchForStreetName(name string) (streets []Street) {
 
 	log.Println("Searching for Streetname:", name)
 
-	rows, err := Connection.Query("select streetpathid, name, type, ST_AsGeoJSON(path) from streetpaths where name ilike $1 LIMIT 10", ("%" + name + "%"))
+	rows, err := Connection.Query("select streetID, name, type, ST_AsGeoJSON(path) from streetpaths where name ilike $1 LIMIT 10", ("%" + name + "%"))
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}
@@ -199,7 +268,7 @@ func SearchForStreetName(name string) (streets []Street) {
 
 		var newStreet Street
 		var geometrys string
-		err := rows.Scan(&newStreet.PathID, &newStreet.Name, &newStreet.StreetType, &geometrys)
+		err := rows.Scan(&newStreet.ID, &newStreet.Name, &newStreet.Type, &geometrys)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -222,8 +291,8 @@ func SearchForNearestStreetFromPoint(point Point) (street Street) {
 	latPath, lngPath := point.LatitudeLongitudeAsString()
 
 	makePoint := ("ST_Distance(path, ST_GeomFromText('POINT(" + lngPath + " " + latPath + ")', 4326))")
-	query := fmt.Sprintf("SELECT streetpathid, name, type, ST_AsGeoJSON(path)  FROM streetpaths ORDER BY %s LIMIT 1", makePoint)
-	err := Connection.QueryRow(query).Scan(&street.PathID, &street.Name, &street.StreetType, &geometrys)
+	query := fmt.Sprintf("SELECT streetID, name, type, ST_AsGeoJSON(path)  FROM streetpaths ORDER BY %s LIMIT 1", makePoint)
+	err := Connection.QueryRow(query).Scan(&street.ID, &street.Name, &street.Type, &geometrys)
 
 	if err != nil {
 		log.Fatal(err)
@@ -242,9 +311,9 @@ func SearchForNearestCyclepathFromPoint(point Point) (cyclepath Street) {
 	latPath, lngPath := point.LatitudeLongitudeAsString()
 
 	makePoint := ("ST_Distance(path, ST_GeomFromText('POINT(" + lngPath + " " + latPath + ")', 4326))")
-	query := fmt.Sprintf("SELECT cyclepathid, type, ST_AsGeoJSON(path) FROM cyclepaths ORDER BY %s LIMIT 1", makePoint)
+	query := fmt.Sprintf("SELECT cycleID, type, ST_AsGeoJSON(path) FROM cyclepaths ORDER BY %s LIMIT 1", makePoint)
 
-	err := Connection.QueryRow(query).Scan(&cyclepath.PathID, &cyclepath.StreetType, &geometrys)
+	err := Connection.QueryRow(query).Scan(&cyclepath.ID, &cyclepath.Type, &geometrys)
 
 	if err != nil {
 		log.Fatal(err)
