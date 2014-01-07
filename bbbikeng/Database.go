@@ -259,7 +259,7 @@ func SearchForStreetName(name string) (streets []Street) {
 
 	log.Println("Searching for Streetname:", name)
 
-	rows, err := Connection.Query("select streetID, name, type, ST_AsGeoJSON(path) from streetpaths where name ilike $1 LIMIT 10", ("%" + name + "%"))
+	rows, err := Connection.Query("select streetpathid, name, type, ST_AsGeoJSON(path) from streetpaths where name ilike $1 LIMIT 10", ("%" + name + "%"))
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}
@@ -291,7 +291,7 @@ func SearchForNearestStreetFromPoint(point Point) (street Street) {
 	latPath, lngPath := point.LatitudeLongitudeAsString()
 
 	makePoint := ("ST_Distance(path, ST_GeomFromText('POINT(" + lngPath + " " + latPath + ")', 4326))")
-	query := fmt.Sprintf("SELECT streetID, name, type, ST_AsGeoJSON(path)  FROM streetpaths ORDER BY %s LIMIT 1", makePoint)
+	query := fmt.Sprintf("SELECT streetpathid, name, type, ST_AsGeoJSON(path)  FROM streetpaths ORDER BY %s LIMIT 1", makePoint)
 	err := Connection.QueryRow(query).Scan(&street.ID, &street.Name, &street.Type, &geometrys)
 
 	if err != nil {

@@ -24,7 +24,6 @@ type GeoJSONPoint struct {
 }
 
 func (f *Point) SetCoordinates(lat float64, lng float64) {
-
 	f.Lat = Round(lat, 6)
 	f.Lng = Round(lng, 6)
 
@@ -33,8 +32,6 @@ func (f *Point) SetCoordinates(lat float64, lng float64) {
 func (f *Point) Coordinates()(lat float64, lng float64) {
 	return f.Lat, f.Lng
 }
-
-
 
 func (f *Point) Compare(comparePoint Point) (equal bool) {
 	thresholdLat := math.Abs(f.Lat) - math.Abs(comparePoint.Lat)
@@ -63,7 +60,6 @@ func (f *Point) LatitudeLongitudeAsString() (lat string, lng string) {
 
 	lat = strconv.FormatFloat(f.Lat, 'f', 6, 64)
 	lng = strconv.FormatFloat(f.Lng, 'f', 6, 64)
-
 	return lat, lng
 
 }

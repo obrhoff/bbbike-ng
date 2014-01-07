@@ -31,27 +31,7 @@ func CalculateRoute(startPoint Point, endPoint Point) (route Route) {
 func Test(){
 
 	street := GetStreetFromId(148)
-
-	firstInter := street.Intersections[1]
-	secondInter := street.Intersections[7]
-
-	fmt.Println("Line From:", firstInter.Street.Name)
-	fmt.Println("Line To:", secondInter.Street.Name)
-
-	test, distance := PathFromIntersectionToIntersection(firstInter.Coordinate, secondInter.Coordinate, street)
-
-	fmt.Println("Test:", test)
-	fmt.Println("Distance", distance)
-
-	cyclepath := GetCyclepathFromStreet(street)
-	greenways := GetGreenwaysFromStreet(street)
-	quality := GetQualityFromStreet(street)
-
-	fmt.Println("Cyclepath:", cyclepath)
-	fmt.Println("Greenways:", greenways)
-	fmt.Println("Quality:", quality)
-
-
+	fmt.Println("Distance!:", street)
 
 }
 
