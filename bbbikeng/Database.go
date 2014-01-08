@@ -109,7 +109,7 @@ func InsertCityToDatabase(city City) {
 	var err error
 	//points := preparePointsForDatabase(cyclepath.Path)
 	points := geoJsonInsert(ConvertPathToGeoJSON(city.Geometry))
-	query := fmt.Sprintf("INSERT INTO city(citypathid, name, bounds) VALUES (%s, '%s', %s)", strconv.Itoa(city.CityID), city.Name, points)
+	query := fmt.Sprintf("INSERT INTO city(citypathid, name, bounds) VALUES (%s, '%s', %s)", strconv.Itoa(city.ID), city.Name, points)
 	fmt.Println("Insert:", query)
 
 	_, err = Connection.Exec(query)

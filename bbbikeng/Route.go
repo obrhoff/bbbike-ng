@@ -1,38 +1,55 @@
 package bbbikeng
 
 import (
-	"fmt"
 	"log"
 )
 
 type Route struct {
+
+	time int
+	distance int
+	path []Point
+
 }
 
-
 func CalculateRoute(startPoint Point, endPoint Point) (route Route) {
-
-	log.Println("Start Latitude:", startPoint)
-	log.Println("End Latitude", endPoint)
 
 	startStreet := SearchForNearestStreetFromPoint(startPoint)
 	endStreet := SearchForNearestStreetFromPoint(endPoint)
 
-	startStreetPoint := IntersectionFromPointToStreet(startStreet, startPoint)
-	endStreetPoint := IntersectionFromPointToStreet(endStreet, endPoint)
+	startPoint = IntersectionFromPointToStreet(startStreet, startPoint)
+	endPoint = IntersectionFromPointToStreet(endStreet, endPoint)
 
-	fmt.Println("Correction Start Point:", startStreetPoint)
-	fmt.Println("Correction End Point:", endStreetPoint)
+	log.Printf("Start: %f,%f", startPoint.Lat, startPoint.Lng)
+	log.Printf("End: %f,%f", endPoint.Lat, endPoint.Lng)
 
 	return route
 
 }
 
-
 func Test(){
 
-	street := GetStreetFromId(148)
-	fmt.Println("Distance!:", street)
+	endPoint:= MakeNewPoint(52.55108,13.37337)
+	startPoint := MakeNewPoint(52.483943,13.356135)
 
+	startStreet := SearchForNearestStreetFromPoint(startPoint)
+	endStreet := SearchForNearestStreetFromPoint(endPoint)
+
+	startPoint = IntersectionFromPointToStreet(startStreet, startPoint)
+	endPoint = IntersectionFromPointToStreet(endStreet, endPoint)
+
+	log.Printf("Start: %f,%f", startPoint.Lat, startPoint.Lng)
+	log.Printf("End: %f,%f", endPoint.Lat, endPoint.Lng)
+
+	log.Println("Intersection first", startStreet.Intersections)
+
+	bla := PathFromPointToIntersections(startPoint, startStreet)
+
+	for _, bl := range bla {
+		log.Println("Score:", bl.distance)
+		log.Println("Path:", bl.path)
+
+	}
+	log.Println("Bla", bla)
 }
-
 

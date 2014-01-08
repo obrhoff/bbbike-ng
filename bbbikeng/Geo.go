@@ -13,6 +13,12 @@ type Point struct {
 	Lng float64
 }
 
+type RoutePath struct {
+
+	path []Point
+	distance int
+}
+
 type GeoJSON struct {
 	Type        string
 	Coordinates [][2]float64
@@ -36,7 +42,7 @@ func (f *Point) Coordinates()(lat float64, lng float64) {
 func (f *Point) Compare(comparePoint Point) (equal bool) {
 	thresholdLat := math.Abs(f.Lat) - math.Abs(comparePoint.Lat)
 	thresholdLng := math.Abs(f.Lng) - math.Abs(comparePoint.Lng)
-	return (thresholdLat <= 0.0000001 && thresholdLng <= 0.0000001)
+	return (thresholdLat <= 0.000001 && thresholdLng <= 0.000001)
 }
 
 func MakeNewPoint(lat float64, lng float64) (newPoint Point) {
@@ -64,6 +70,7 @@ func (f *Point) LatitudeLongitudeAsString() (lat string, lng string) {
 
 }
 
+
 func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters int) {
 
 	dLat, dLon := pointDifference(firstPoint, secondPoint)
@@ -81,46 +88,57 @@ func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters int) 
 
 }
 
+func PathFromPointToIntersections(startPoint Point, street Street) (routePaths []RoutePath){
 
-func PathFromIntersectionToIntersection(entranceIntersection Point, exitIntersection Point, street Street) (points []Point, distance int) {
+	for _, intersection := range street.Intersections {
 
-	var beginningIndex int
-	var endingIndex int
+		var startIndex int
+		var endIndex int
+		var routePath RoutePath
 
-	if !entranceIntersection.Compare(exitIntersection) {
-		for i := 1; i < len(street.Path)-1; i++ {
-			firstPoint := street.Path[i]
-			secondPoint := street.Path[i+1]
-			if isBoundedBox(firstPoint, secondPoint, entranceIntersection) {
-				beginningIndex = i
-			} else if isBoundedBox(firstPoint, secondPoint, exitIntersection) {
-				endingIndex = i
+		for i, streetPathPoint := range street.Path {
+			if streetPathPoint.Compare(intersection.Coordinate) {
+				endIndex = i
+			}
+		}
+		smallestDistanceScore := -1
+
+		for i, streetPathPoint := range street.Path {
+			distanceToStreetPathPoint := DistanceFromPointToPoint(startPoint, streetPathPoint)
+			distanceToIntersection := DistanceFromPointToPoint(streetPathPoint, intersection.Coordinate)
+			distanceScore := distanceToStreetPathPoint + distanceToIntersection
+			if smallestDistanceScore < 0 || smallestDistanceScore >= distanceScore {
+				smallestDistanceScore = distanceScore
+				startIndex = i
 			}
 		}
 
-		fmt.Println("FirstIndex:", beginningIndex)
-		fmt.Println("LastIndex:", endingIndex)
+		routePath.path = append(routePath.path, startPoint)
 
-		points = append(points, entranceIntersection)
-
-		if beginningIndex < endingIndex {
-			for i := beginningIndex; i > endingIndex; i++ {
-				points = append(points, street.Path[i])
+		if startIndex < endIndex {
+			for i := startIndex; i <= endIndex; i++ {
+				if !startPoint.Compare(street.Path[i]) {
+					routePath.path = append(routePath.path, street.Path[i])
+				}
 			}
-		} else {
-			for i := beginningIndex; endingIndex < i ; i-- {
-				points = append(points, street.Path[i])
+		} else if startIndex >= endIndex  {
+			for i := startIndex; i >= endIndex; i-- {
+				if !startPoint.Compare(street.Path[i]) {
+					routePath.path = append(routePath.path, street.Path[i])
+				}
 			}
 		}
-		points = append(points, exitIntersection)
-	} else {
-		points = append(points, exitIntersection)
+		for i := 0; i <= len(routePath.path)-1; i++ {
+			firstPoint := routePath.path[i]
+			secondPoint := routePath.path[len(routePath.path)-1]
+			routePath.distance += DistanceFromPointToPoint(firstPoint, secondPoint)
+		}
+		routePaths = append(routePaths, routePath)
 	}
 
-	return points, DistanceFromLinePoint(points)
+	return routePaths
 
 }
-
 
 func BearingBetweenPoints(firstSegment Point, secondSegment Point) (angle float64) {
 

@@ -6,21 +6,21 @@ type basePath struct {
 	Path []Point
 }
 
-type advancedPath struct {
+type baseMeta struct {
 	Name string
 	ID int
 }
 
 type City struct {
-	CityID int
-	Name string
+
+	baseMeta
 	Country string
 	Geometry []Point
 }
 
 type Street struct {
 	basePath
-	advancedPath
+	baseMeta
 	Intersections []Intersection
 }
 

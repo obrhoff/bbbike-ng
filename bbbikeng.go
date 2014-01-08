@@ -5,7 +5,7 @@ import (
 	"./Import"
 	"fmt"
 	"flag"
-	"os"
+//	"os"
 	"github.com/ant0ine/go-json-rest"
 	//"log"
 	"net/http"
@@ -24,14 +24,17 @@ func main() {
 	bbbikeng.ConnectToDatabase()
 	defer bbbikeng.Connection.Close()
 
+	bbbikeng.Test()
+
+	/*
 	if *startFlag && !*dataImportFlag {
-		StartBBBikeServer()
+	//	StartBBBikeServer()
 	} else if *dataImportFlag{
-		StartParsingBBBikeData(*dataImportPathFlag)
+	//	StartParsingBBBikeData(*dataImportPathFlag)
 	} else {
 		fmt.Printf("--import-data --import-path=/bbbike/data\n")
 		os.Exit(1)
-	}
+	} */
 
 }
 
