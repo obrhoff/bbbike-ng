@@ -5,9 +5,9 @@ import (
 	"./Import"
 	"fmt"
 	"flag"
-//	"os"
+	"os"
 	"github.com/ant0ine/go-json-rest"
-	//"log"
+	"log"
 	"net/http"
 	"strings"
 	"strconv"
@@ -24,21 +24,20 @@ func main() {
 	bbbikeng.ConnectToDatabase()
 	defer bbbikeng.Connection.Close()
 
-	bbbikeng.Test()
-
-	/*
 	if *startFlag && !*dataImportFlag {
-	//	StartBBBikeServer()
+		StartBBBikeServer()
 	} else if *dataImportFlag{
-	//	StartParsingBBBikeData(*dataImportPathFlag)
+		StartParsingBBBikeData(*dataImportPathFlag)
 	} else {
 		fmt.Printf("--import-data --import-path=/bbbike/data\n")
 		os.Exit(1)
-	} */
+	}
 
 }
 
 func StartBBBikeServer() {
+
+	log.Println("Starting server...")
 
 	handler := rest.ResourceHandler{}
 		handler.EnableGzip = true
@@ -96,10 +95,7 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 
 	startPoint := bbbikeng.MakeNewPoint(startLat, startLng)
 	endPoint := bbbikeng.MakeNewPoint(endLat, endLng)
-	route := bbbikeng.CalculateRoute(startPoint, endPoint)
-
-	//	start := parameters["start"]
-//	end := parameters["end"]
+	route := bbbikeng.GetRoute(startPoint, endPoint)
 
 	w.WriteJson(&route)
 

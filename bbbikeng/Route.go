@@ -2,54 +2,82 @@ package bbbikeng
 
 import (
 	"log"
+	"fmt"
 )
 
 type Route struct {
 
-	time int
-	distance int
-	path []Point
+
+
 
 }
 
-func CalculateRoute(startPoint Point, endPoint Point) (route Route) {
+func GetNearestNode(point Point) (nearestNode Node) {
 
-	startStreet := SearchForNearestStreetFromPoint(startPoint)
-	endStreet := SearchForNearestStreetFromPoint(endPoint)
-
-	startPoint = IntersectionFromPointToStreet(startStreet, startPoint)
-	endPoint = IntersectionFromPointToStreet(endStreet, endPoint)
-
-	log.Printf("Start: %f,%f", startPoint.Lat, startPoint.Lng)
-	log.Printf("End: %f,%f", endPoint.Lat, endPoint.Lng)
-
-	return route
+	return FindNearestNode(point)
 
 }
 
-func Test(){
+func GetRoute(from Point, to Point) (route Route){
 
-	endPoint:= MakeNewPoint(52.55108,13.37337)
-	startPoint := MakeNewPoint(52.483943,13.356135)
+	startNode := FindNearestNode(from)
+	endNode := FindNearestNode(to)
 
-	startStreet := SearchForNearestStreetFromPoint(startPoint)
-	endStreet := SearchForNearestStreetFromPoint(endPoint)
+	var openList = NewNodeSet();
+	var closedList = NewNodeSet();
 
-	startPoint = IntersectionFromPointToStreet(startStreet, startPoint)
-	endPoint = IntersectionFromPointToStreet(endStreet, endPoint)
+	openList.Add(startNode)
 
-	log.Printf("Start: %f,%f", startPoint.Lat, startPoint.Lng)
-	log.Printf("End: %f,%f", endPoint.Lat, endPoint.Lng)
+	for openList.Length() > 0 {
 
-	log.Println("Intersection first", startStreet.Intersections)
+		lowLnd := -1
+		var currentNode Node
 
-	bla := PathFromPointToIntersections(startPoint, startStreet)
+		for _, value := range openList.data {
+			score := value.DistanceFromParentNode + DistanceFromPointToPoint(value.NodeGeometry, endNode.NodeGeometry)
+			if score < lowLnd || lowLnd < 0 {
+				currentNode = value
+			}
+		}
 
-	for _, bl := range bla {
-		log.Println("Score:", bl.distance)
-		log.Println("Path:", bl.path)
+		log.Println("CurrentNode", currentNode)
+
+		if currentNode.NodeID == endNode.NodeID {
+			fmt.Println("Done!", currentNode)
+		}
+
+		openList.Remove(currentNode)
+		closedList.Add(currentNode)
+
+		for _, neighbor := range currentNode.Neigbors {
+
+			neighbor.Neigbors = GetNeighborNodesFromNode(neighbor)
+
+			if closedList.Contains(neighbor) || len(neighbor.Neigbors) < 1 {
+				continue
+			}
+
+			gScore := currentNode.DistanceFromParentNode + neighbor.DistanceFromParentNode
+			gScoreIsBest := false;
+
+			if !openList.Contains(neighbor) {
+				gScoreIsBest = true;
+				neighbor.Heuristic = DistanceFromPointToPoint(neighbor.NodeGeometry, endNode.NodeGeometry)
+				openList.Add(neighbor)
+			} else if(gScore < neighbor.Heuristic) {
+				gScoreIsBest = true;
+			}
+
+			if (gScoreIsBest) {
+
+
+			}
+
+
+		}
+
 
 	}
-	log.Println("Bla", bla)
-}
 
+	return route
+}

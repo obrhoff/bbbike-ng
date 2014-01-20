@@ -3,7 +3,6 @@ package Import
 import (
 	"../bbbikeng"
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"regexp"
@@ -89,7 +88,7 @@ func readLines(path string, fileName string) ([]Generic, error) {
 
 func ParseData(path string) {
 
-	fmt.Println("Parsing Pathdata.")
+	log.Println("Parsing Pathdata.")
 	//citys, fileErr := readLines(path, "Berlin")
 	streets, fileErr := readLines(path, "strassen")
 	cyclepaths, fileErr := readLines(path, "radwege")

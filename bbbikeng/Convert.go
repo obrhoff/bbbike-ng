@@ -7,7 +7,8 @@ package bbbikeng
 import (
 	"encoding/json"
 	"log"
-	"math"
+	"strings"
+	"strconv"
 )
 
 const X0 = -780761.760862528
@@ -37,16 +38,15 @@ func ConvertLatinToUTF8(iso8859_1_buf []byte) string {
 
 func ConvertGeoJSONtoPoint(jsonInput string) (point Point) {
 
-	var coordinates GeoJSONPoint
+	points := ConvertGeoJSONtoPath(jsonInput)
 
-	/*
+	if len(points) > 0 {
+		point = points[0]
+	} else {
+		log.Fatal("Error Converting Json", jsonInput)
+	}
 
-	err := json.Unmarshal([]byte(jsonInput), &coordinates)
-	if err != nil {
-		log.Fatal(err)
-	} */
-
-	return MakeNewPoint(coordinates.Coordinates[1], coordinates.Coordinates[0])
+	return point
 
 }
 
@@ -119,23 +119,27 @@ func ConvertPathToGeoJSON(path []Point)(jsonOutput string) {
 	return string(jsonData)
 }
 
+func ConvertStringToIntArray(stringList string) (list []int) {
+
+	stringList = strings.Replace(stringList, "{", "", -1)
+	stringList = strings.Replace(stringList, "}", "", -1)
+	stringList = strings.Replace(stringList, "NULL", "", -1)
+	streetsSplitted := strings.Split(stringList, ",")
+
+
+	for _, string := range streetsSplitted {
+		converted, err := strconv.Atoi(string)
+		if err == nil {
+			list = append(list, converted)
+		}
+	}
+
+	return list
+
+}
 
 func geoJsonInsert(geoJson string) (statement string) {
 
 	return ("ST_TRANSFORM(ST_SetSRID(ST_GeomFromGeoJSON('"+ geoJson + "'), '4326'),4326)")
 
-}
-
-func Round(val float64, prec int) float64 {
-
-	var rounder float64
-	intermed := val * math.Pow(10, float64(prec))
-
-	if val <= 0.5 {
-		rounder = math.Ceil(intermed)
-	} else {
-		rounder = math.Floor(intermed)
-	}
-
-	return rounder / math.Pow(10, float64(prec))
 }

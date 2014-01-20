@@ -18,15 +18,7 @@ import (
 	"io/ioutil"
 )
 
-const user = "root"
-const password = "root"
-const host = "127.0.0.1"
-const port = "5433"
-const database = "bbbikeng"
-
 var Connection *sql.DB
-
-// connectionParameter := fmt.Sprint("user=", user, " password=", password, " host=", host, " port=", port, " dbname=", database)
 
 type Config struct {
 	User string
@@ -34,35 +26,32 @@ type Config struct {
 	Host string
 	Port string
 	Database string
+	Debug bool
 }
+
 
 func InsertStreetToDatabase(street Street) {
 
-	//log.Println("Inserting Streetpath:", street)
 	var err error
-	//points := preparePointsForDatabase(street.Path)
 	points := geoJsonInsert(ConvertPathToGeoJSON(street.Path))
-	fmt.Println("Inserting:", street)
 	fixedName := strings.Replace(street.Name, "'", "''", -1)
+	query := fmt.Sprintf("INSERT INTO way(wayid, name, type, geometry) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(street.ID), fixedName, street.Type, points)
 
-	query := fmt.Sprintf("INSERT INTO streetpaths(streetpathid, name, type, path) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(street.ID), fixedName, street.Type, points)
-	fmt.Println("Insert:", query)
+	log.Println("DB:", query)
+
 	_, err = Connection.Exec(query)
-
 	if err != nil {
 		log.Fatal("Error inserting Street Into Database: %s", err.Error())
 	}
-
-
 }
 
 func InsertCyclePathToDatabase(cyclepath Street) {
 
 	var err error
-	//points := preparePointsForDatabase(cyclepath.Path)
 	points := geoJsonInsert(ConvertPathToGeoJSON(cyclepath.Path))
-	query := fmt.Sprintf("INSERT INTO cyclepaths(cyclepathid, type, path) VALUES (%s, '%s', %s)", strconv.Itoa(cyclepath.ID), cyclepath.Type, points)
-	fmt.Println("Insert:", query)
+	query := fmt.Sprintf("INSERT INTO cycleway(cycleid, type, geometry) VALUES (%s, '%s', %s)", strconv.Itoa(cyclepath.ID), cyclepath.Type, points)
+
+	log.Println("DB:", query)
 
 	_, err = Connection.Exec(query)
 
@@ -76,13 +65,13 @@ func InsertGreenToDatabase(green Street) {
 
 	var err error
 	points := geoJsonInsert(ConvertPathToGeoJSON(green.Path))
-	query := fmt.Sprintf("INSERT INTO greenways(greenwaypathid, type, path) VALUES (%s, '%s', %s)", strconv.Itoa(green.ID), green.Type, points)
-	fmt.Println("Insert:", query)
+	query := fmt.Sprintf("INSERT INTO greenway(greenwayid, type, geometry) VALUES (%s, '%s', %s)", strconv.Itoa(green.ID), green.Type, points)
+
+	log.Println("DB:", query)
 
 	_, err = Connection.Exec(query)
-
 	if err != nil {
-		log.Fatal("Error inserting Cyclepath Into Database: %s", err.Error())
+		log.Fatal("Error inserting Greenway Into Database: %s", err.Error())
 	}
 
 }
@@ -90,11 +79,10 @@ func InsertGreenToDatabase(green Street) {
 func InsertQualityToDatabase(quality Street) {
 
 	var err error
-	//points := preparePointsForDatabase(cyclepath.Path)
 	points := geoJsonInsert(ConvertPathToGeoJSON(quality.Path))
-	query := fmt.Sprintf("INSERT INTO qualitys(qualitypathid, type, path) VALUES (%s, '%s', %s)", strconv.Itoa(quality.ID), quality.Type, points)
-	fmt.Println("Insert:", query)
+	query := fmt.Sprintf("INSERT INTO quality(qualityid, type, geometry) VALUES (%s, '%s', %s)", strconv.Itoa(quality.ID), quality.Type, points)
 
+	log.Println("DB:", query)
 	_, err = Connection.Exec(query)
 
 	if err != nil {
@@ -103,34 +91,52 @@ func InsertQualityToDatabase(quality Street) {
 
 }
 
+func GetNodeFromId(id int) (node Node) {
 
-func InsertCityToDatabase(city City) {
+	var nodes string
+	var ways string
 
-	var err error
-	//points := preparePointsForDatabase(cyclepath.Path)
-	points := geoJsonInsert(ConvertPathToGeoJSON(city.Geometry))
-	query := fmt.Sprintf("INSERT INTO city(citypathid, name, bounds) VALUES (%s, '%s', %s)", strconv.Itoa(city.ID), city.Name, points)
-	fmt.Println("Insert:", query)
+	var nodesList []int
+	var wayList []int
+	var geometry string
 
-	_, err = Connection.Exec(query)
+
+	err := Connection.QueryRow("select nodeid, ST_AsGeoJSON(geometry), array_to_json(ways), array_to_json(neighbors) from node where nodeid = $1", id).Scan(&node.NodeID, &geometry, &ways, &nodes)
 
 	if err != nil {
-		log.Fatal("Error inserting City Into Database: %s", err.Error())
+		log.Fatal("Error on getting Node from ID %s", err.Error())
 	}
+
+	json.Unmarshal([]byte(nodes), &nodesList)
+	json.Unmarshal([]byte(ways), &wayList)
+	node.NodeGeometry = ConvertGeoJSONtoPoint(geometry)
+	for _, waysid := range wayList {
+		nodeStreet := GetStreetFromId(waysid)
+		node.Streets = append(node.Streets, nodeStreet)
+	}
+
+	node.Neigbors = GetNeighborNodesFromNode(node)
+
+	return node
 
 }
 
-
 func GetStreetFromId(id int) (street Street) {
 
+	street.ID = id
 	var geometrys string
-	err := Connection.QueryRow("select streetpathid, name, type, ST_AsGeoJSON(path) from streetpaths where streetpathid = $1", id).Scan(&street.ID, &street.Name, &street.Type, &geometrys)
+	var nodes string
+
+	err := Connection.QueryRow("select wayid, name, type, ST_AsGeoJSON(geometry), nodes from way where wayid = $1", id).Scan(&street.ID, &street.Name, &street.Type, &geometrys, &nodes)
 	if err != nil {
 		log.Fatal("Error on getting Street from ID %s", err.Error())
 	}
 
+	var nodesList []int
+	json.Unmarshal([]byte(nodes), &nodesList)
 	street.SetPathFromGeoJSON(geometrys)
-	street.SetIntersections()
+
+
 	return street
 
 }
@@ -138,44 +144,67 @@ func GetStreetFromId(id int) (street Street) {
 func GetCyclepathFromId(id int) (cyclepath Street) {
 
 	var geometrys string
-	err := Connection.QueryRow("select cyclepathid, type, ST_AsGeoJSON(path) from cyclepaths where cyclepathid = $1", id).Scan(&cyclepath.ID, &cyclepath.Type, &geometrys)
+	err := Connection.QueryRow("select cycleid, type, ST_AsGeoJSON(geometry) from cyclepaths where cycleid = $1", id).Scan(&cyclepath.ID, &cyclepath.Type, &geometrys)
 	if err != nil {
 		log.Fatal("Error on getting Cyclepath from ID: %s", err.Error())
 	}
 	cyclepath.SetPathFromGeoJSON(geometrys)
-	cyclepath.SetIntersections()
 	return cyclepath
 
 }
 
-// returns crossing streets and intersections
-func GetStreetIntersections(street *Street) (intersections []Intersection) {
+func FindNearestNode(point Point) (closestNode Node){
 
-	rows, err := Connection.Query("select s2.streetpathid, s2.name, s2.type, ST_AsGeoJSON(ST_Intersection(s1.path, s2.path)), ST_AsGeoJSON(s2.path) from streetpaths s1, streetpaths s2 where s1.streetpathid = $1 AND (ST_Crosses(s2.path, s1.path) OR ST_Intersects(s2.path, s1.path))", street.ID)
+	lat, lng := point.LatitudeLongitudeAsString()
+	makePoint := ("ST_Distance(geometry, ST_GeomFromText('POINT(" + lng + " " + lat + ")', 4326))")
+	query := fmt.Sprintf("SELECT nodeid FROM node ORDER BY %s LIMIT 1", makePoint)
+
+	log.Println("DB:", query)
+
+	var nodeid int
+	err := Connection.QueryRow(query).Scan(&nodeid)
 	if err != nil {
-		log.Fatal("Error on getting Intersections: %s", err.Error())
+		log.Fatal("Error on getting Closest Node from ID: %s", err.Error())
 	}
+
+	return GetNodeFromId(nodeid)
+}
+
+func GetNeighborNodesFromNode(node Node) (nodes []Node) {
+
+	var potentialNeighbors []Node
+	rows, err := Connection.Query("SELECT nodeid, st_asgeojson(geometry), array_to_json(ways) as geometry FROM node t JOIN (select unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)", node.NodeID)
+
+	if err != nil {
+		log.Fatal("Error fetching Neighbor Nodes:", err)
+	}
+
 	defer rows.Close()
+
 	for rows.Next() {
 
-		var newIntersection Intersection
+		var newNode Node
+		var geometry string
 
-		var geometrys string
-		var intersectionCoordinate string
+		var ways string
+		var wayids []int
 
-		err := rows.Scan(&newIntersection.Street.ID, &newIntersection.Street.Name, &newIntersection.Street.Type, &intersectionCoordinate,&geometrys)
+		err := rows.Scan(&newNode.NodeID, &geometry, &ways)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Error Neighbor Nodes:", err)
 		}
+		json.Unmarshal([]byte(ways), &wayids)
+		for _,id := range wayids {
+			street := GetStreetFromId(id)
+			newNode.Streets = append(newNode.Streets, street)
+		}
+		newNode.NodeGeometry = ConvertGeoJSONtoPoint(geometry)
 
-		if street.ID != newIntersection.Street.ID {
-			newIntersection.Street.SetPathFromGeoJSON(geometrys)
-			newIntersection.SetCoordinationFromGeoJSON(intersectionCoordinate)
-			intersections = append(intersections, newIntersection)
-		}
+		potentialNeighbors = append(potentialNeighbors, newNode)
+
 	}
 
-	return intersections
+	return node.Neighbors(potentialNeighbors)
 
 }
 
@@ -274,7 +303,7 @@ func SearchForStreetName(name string) (streets []Street) {
 		}
 
 		newStreet.SetPathFromGeoJSON(geometrys)
-		newStreet.SetIntersections()
+	//	newStreet.SetIntersections()
 
 		streets = append(streets, newStreet)
 
@@ -298,9 +327,8 @@ func SearchForNearestStreetFromPoint(point Point) (street Street) {
 		log.Fatal(err)
 	}
 
-	street.SetPathFromGeoJSON(geometrys)
-	street.SetIntersections()
 
+	street.SetPathFromGeoJSON(geometrys)
 	return street
 
 }
@@ -320,12 +348,10 @@ func SearchForNearestCyclepathFromPoint(point Point) (cyclepath Street) {
 	}
 
 	cyclepath.SetPathFromGeoJSON(geometrys)
-	cyclepath.SetIntersections()
 
 	return cyclepath
 
 }
-
 
 func ConnectToDatabase() {
 

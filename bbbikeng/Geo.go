@@ -3,7 +3,6 @@ package bbbikeng
 import (
 	"math"
 	"strconv"
-	"fmt"
 )
 
 const RADIUS = 6368500.0
@@ -11,12 +10,6 @@ const RADIUS = 6368500.0
 type Point struct {
 	Lat float64
 	Lng float64
-}
-
-type RoutePath struct {
-
-	path []Point
-	distance int
 }
 
 type GeoJSON struct {
@@ -30,19 +23,16 @@ type GeoJSONPoint struct {
 }
 
 func (f *Point) SetCoordinates(lat float64, lng float64) {
-	f.Lat = Round(lat, 6)
-	f.Lng = Round(lng, 6)
+
+	f.Lat = lat;
+	f.Lng = lng
 
 }
 
 func (f *Point) Coordinates()(lat float64, lng float64) {
-	return f.Lat, f.Lng
-}
 
-func (f *Point) Compare(comparePoint Point) (equal bool) {
-	thresholdLat := math.Abs(f.Lat) - math.Abs(comparePoint.Lat)
-	thresholdLng := math.Abs(f.Lng) - math.Abs(comparePoint.Lng)
-	return (thresholdLat <= 0.000001 && thresholdLng <= 0.000001)
+	return f.Lat, f.Lng
+
 }
 
 func MakeNewPoint(lat float64, lng float64) (newPoint Point) {
@@ -63,13 +53,10 @@ func MakeNewPointFromString(lat string, lng string) (newPoint Point) {
 }
 
 func (f *Point) LatitudeLongitudeAsString() (lat string, lng string) {
-
 	lat = strconv.FormatFloat(f.Lat, 'f', 6, 64)
 	lng = strconv.FormatFloat(f.Lng, 'f', 6, 64)
 	return lat, lng
-
 }
-
 
 func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters int) {
 
@@ -88,57 +75,7 @@ func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters int) 
 
 }
 
-func PathFromPointToIntersections(startPoint Point, street Street) (routePaths []RoutePath){
 
-	for _, intersection := range street.Intersections {
-
-		var startIndex int
-		var endIndex int
-		var routePath RoutePath
-
-		for i, streetPathPoint := range street.Path {
-			if streetPathPoint.Compare(intersection.Coordinate) {
-				endIndex = i
-			}
-		}
-		smallestDistanceScore := -1
-
-		for i, streetPathPoint := range street.Path {
-			distanceToStreetPathPoint := DistanceFromPointToPoint(startPoint, streetPathPoint)
-			distanceToIntersection := DistanceFromPointToPoint(streetPathPoint, intersection.Coordinate)
-			distanceScore := distanceToStreetPathPoint + distanceToIntersection
-			if smallestDistanceScore < 0 || smallestDistanceScore >= distanceScore {
-				smallestDistanceScore = distanceScore
-				startIndex = i
-			}
-		}
-
-		routePath.path = append(routePath.path, startPoint)
-
-		if startIndex < endIndex {
-			for i := startIndex; i <= endIndex; i++ {
-				if !startPoint.Compare(street.Path[i]) {
-					routePath.path = append(routePath.path, street.Path[i])
-				}
-			}
-		} else if startIndex >= endIndex  {
-			for i := startIndex; i >= endIndex; i-- {
-				if !startPoint.Compare(street.Path[i]) {
-					routePath.path = append(routePath.path, street.Path[i])
-				}
-			}
-		}
-		for i := 0; i <= len(routePath.path)-1; i++ {
-			firstPoint := routePath.path[i]
-			secondPoint := routePath.path[len(routePath.path)-1]
-			routePath.distance += DistanceFromPointToPoint(firstPoint, secondPoint)
-		}
-		routePaths = append(routePaths, routePath)
-	}
-
-	return routePaths
-
-}
 
 func BearingBetweenPoints(firstSegment Point, secondSegment Point) (angle float64) {
 
