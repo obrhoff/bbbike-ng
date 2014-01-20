@@ -78,16 +78,16 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 		return
 	}
 
-	splittedStart := strings.Split(start[0], ".")
-	splittedEnd := strings.Split(end[0], ".")
+	splittedStart := strings.Split(start[0], ",")
+	splittedEnd := strings.Split(end[0], ",")
 
 	var err error
 	var startLat, startLng, endLat, endLng float64
 
-	startLat, err = strconv.ParseFloat(splittedStart[1], 64)
-	startLng, err = strconv.ParseFloat(splittedStart[0], 64)
-	endLat, err = strconv.ParseFloat(splittedEnd[1], 64)
-	endLng, err = strconv.ParseFloat(splittedEnd[0], 64)
+	startLat, err = strconv.ParseFloat(splittedStart[0], 64)
+	startLng, err = strconv.ParseFloat(splittedStart[1], 64)
+	endLat, err = strconv.ParseFloat(splittedEnd[0], 64)
+	endLng, err = strconv.ParseFloat(splittedEnd[1], 64)
 
 	if err != nil {
 		return
@@ -95,6 +95,9 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 
 	startPoint := bbbikeng.MakeNewPoint(startLat, startLng)
 	endPoint := bbbikeng.MakeNewPoint(endLat, endLng)
+
+	log.Printf("Start Routing from: %f,%f to %f,%f", startPoint.Lat, startPoint.Lng, endPoint.Lat, endPoint.Lng)
+
 	route := bbbikeng.GetRoute(startPoint, endPoint)
 
 	w.WriteJson(&route)

@@ -23,6 +23,9 @@ func GetRoute(from Point, to Point) (route Route){
 	startNode := FindNearestNode(from)
 	endNode := FindNearestNode(to)
 
+	log.Println("StartNode:", startNode.NodeID)
+	log.Println("EndNode:", endNode.NodeID)
+
 	var openList = NewNodeSet();
 	var closedList = NewNodeSet();
 
