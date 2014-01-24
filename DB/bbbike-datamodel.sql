@@ -12,6 +12,9 @@ DROP TABLE IF EXISTS node;
 DROP TABLE IF EXISTS way;
 DROP TABLE IF EXISTS place;
 
+SELECT topology.DropTopology('way_topo');
+SELECT topology.DropTopology('place_topo');
+
 CREATE TABLE public.way(
 	wayid bigserial,
 	name name,

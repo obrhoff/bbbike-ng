@@ -91,10 +91,16 @@ func ParseData(path string) {
 	log.Println("Parsing Pathdata.")
 	//citys, fileErr := readLines(path, "Berlin")
 	streets, fileErr := readLines(path, "strassen")
-	cyclepaths, fileErr := readLines(path, "radwege")
+	places, fileErr := readLines(path, "plaetze")
 
+	for _, place := range places {
+		streets = append(streets, place)
+	}
+
+	cyclepaths, fileErr := readLines(path, "radwege")
 	greens, fileErr := readLines(path, "green")
 	qualitys, fileErr := readLines(path, "qualitaet_s")
+
 
 	if fileErr != nil {
 		log.Fatalf("Failed reading Strassen File: %s", fileErr)
@@ -109,19 +115,17 @@ func ParseData(path string) {
 		bbbikeng.InsertCityToDatabase(newCity)
 	} */
 
-	for i, street := range streets {
+	for _, street := range streets {
 		var newStreet bbbikeng.Street
-		newStreet.ID = i
 		newStreet.Name = street.Name
 		newStreet.Type = street.Type
 		newStreet.Path = street.Path
-
+		// some data are incomplete and produce only a point and not a multiline. points are inserted into place table instead of way
 		if len(newStreet.Path) > 1 {
 			bbbikeng.InsertStreetToDatabase(newStreet)
 		} else {
 			bbbikeng.InsertPlaceToDatabase(newStreet)
 		}
-
 	}
 
 	for i, cyclepath := range cyclepaths {

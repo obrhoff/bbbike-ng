@@ -35,8 +35,13 @@ func InsertPlaceToDatabase(place Street) {
 	var err error
 	points := geoJsonInsert(ConvertPathToGeoJSON(place.Path))
 	fixedName := strings.Replace(place.Name, "'", "''", -1)
-	query := fmt.Sprintf("INSERT INTO place (placeid, name, type, geometry) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(place.ID), fixedName, place.Type, points)
 
+	var query string
+	if place.ID != 0 {
+		query = fmt.Sprintf("INSERT INTO place (placeid, name, type, geometry) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(place.ID), fixedName, place.Type, points)
+	} else {
+		query = fmt.Sprintf("INSERT INTO place (name, type, geometry) VALUES ('%s', '%s', %s)", fixedName, place.Type, points)
+	}
 	log.Println("DB:", query)
 
 	_, err = Connection.Exec(query)
@@ -50,7 +55,13 @@ func InsertStreetToDatabase(street Street) {
 	var err error
 	points := geoJsonInsert(ConvertPathToGeoJSON(street.Path))
 	fixedName := strings.Replace(street.Name, "'", "''", -1)
-	query := fmt.Sprintf("INSERT INTO way(wayid, name, type, geometry) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(street.ID), fixedName, street.Type, points)
+
+	var query string
+	if street.ID != 0 {
+		query = fmt.Sprintf("INSERT INTO way(wayid ,name, type, geometry) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(street.ID), fixedName, street.Type, points)
+	} else {
+		query = fmt.Sprintf("INSERT INTO way (name, type, geometry) VALUES ('%s', '%s', %s)", fixedName, street.Type, points)
+	}
 
 	log.Println("DB:", query)
 
