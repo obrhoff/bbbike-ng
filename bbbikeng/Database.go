@@ -126,8 +126,7 @@ func GetNodeFromId(id int) (node Node) {
 	var wayList []int
 	var geometry string
 
-
-	err := Connection.QueryRow("select nodeid, ST_AsGeoJSON(geometry), array_to_json(ways), array_to_json(neighbors) from node where nodeid = $1", id).Scan(&node.NodeID, &geometry, &ways, &nodes)
+	err := Connection.QueryRow("select nodeid, ST_AsGeoJSON(geometry), array_to_json(ways), array_to_json(neighbors), walkable from node where nodeid = $1", id).Scan(&node.NodeID, &geometry, &ways, &nodes, &node.Walkable)
 
 	if err != nil {
 		log.Fatal("Error on getting Node from ID %s", err.Error())
@@ -140,8 +139,6 @@ func GetNodeFromId(id int) (node Node) {
 		nodeStreet := GetStreetFromId(waysid)
 		node.Streets = append(node.Streets, nodeStreet)
 	}
-
-	node.Neigbors = GetNeighborNodesFromNode(node)
 
 	return node
 
@@ -198,39 +195,39 @@ func FindNearestNode(point Point) (closestNode Node){
 
 func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 
-	var potentialNeighbors []Node
-	rows, err := Connection.Query("SELECT nodeid, st_asgeojson(geometry), array_to_json(ways) as geometry FROM node t JOIN (select unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)", node.NodeID)
+//	rows, err := Connection.Query("SELECT nodeid, st_asgeojson(geometry), array_to_json(ways) as geometry FROM node t JOIN (select unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)", node.NodeID)
+	rows, err := Connection.Query("SELECT nodeid, st_asgeojson(geometry), array_to_json(ways) as ways, walkable FROM node t JOIN (select unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)", node.NodeID)
 
 	if err != nil {
 		log.Fatal("Error fetching Neighbor Nodes:", err)
 	}
 
 	defer rows.Close()
-
 	for rows.Next() {
 
 		var newNode Node
 		var geometry string
-
 		var ways string
 		var wayids []int
 
-		err := rows.Scan(&newNode.NodeID, &geometry, &ways)
+		err := rows.Scan(&newNode.NodeID, &geometry, &ways, &newNode.Walkable)
 		if err != nil {
 			log.Fatal("Error Neighbor Nodes:", err)
 		}
 		json.Unmarshal([]byte(ways), &wayids)
+		/*
 		for _,id := range wayids {
 			street := GetStreetFromId(id)
 			newNode.Streets = append(newNode.Streets, street)
-		}
+		}*/
+
 		newNode.NodeGeometry = ConvertGeoJSONtoPoint(geometry)
-
-		potentialNeighbors = append(potentialNeighbors, newNode)
-
+		node.Neigbors = append(node.Neigbors, newNode)
 	}
 
-	return node.Neighbors(potentialNeighbors)
+
+
+	return node.Neigbors
 
 }
 

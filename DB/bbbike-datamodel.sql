@@ -76,6 +76,7 @@ CREATE TABLE public.node(
 	geometry geometry(point, 4326),
 	ways bigint[],
 	neighbors bigint[],
+	walkable bool,
 	CONSTRAINT nodeid PRIMARY KEY (nodeid)
 );
 

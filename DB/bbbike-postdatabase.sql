@@ -34,7 +34,7 @@ DELETE FROM node WHERE nodeid IN
 
 UPDATE node
 SET ways = subquery.ways
-FROM ( SELECT node.nodeid, array_agg(way.wayid) AS ways FROM way_cut, node WHERE ST_Intersects(way_cut.geometry, node.geometry) GROUP BY node.nodeid ) AS subquery
+FROM ( SELECT node.nodeid, array_agg(way_cut.wayid) AS ways FROM way_cut, node WHERE ST_Intersects(way_cut.geometry, node.geometry) GROUP BY node.nodeid ) AS subquery
 WHERE subquery.nodeid = node.nodeid;
 
 UPDATE way_cut
@@ -49,3 +49,6 @@ WHERE subquery.nodeid = node.nodeid;
 
 DROP TABLE way;
 alter table way_cut rename to way;
+
+UPDATE node SET walkable = true WHERE array_length(neighbors, 1) > 1;
+UPDATE node SET walkable = false WHERE array_length(neighbors, 1) < 2;

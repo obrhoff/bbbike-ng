@@ -8,15 +8,8 @@ import (
 type Route struct {
 
 
-
-
 }
 
-func GetNearestNode(point Point) (nearestNode Node) {
-
-	return FindNearestNode(point)
-
-}
 
 func GetRoute(from Point, to Point) (route Route){
 
@@ -55,11 +48,11 @@ func GetRoute(from Point, to Point) (route Route){
 		openList.Remove(currentNode)
 		closedList.Add(currentNode)
 
-		for _, neighbor := range currentNode.Neigbors {
+		neighbors := GetNeighborNodesFromNode(currentNode);
 
-			neighbor.Neigbors = GetNeighborNodesFromNode(neighbor)
+		for _, neighbor := range neighbors {
 
-			if closedList.Contains(neighbor) || len(neighbor.Neigbors) < 1 {
+			if closedList.Contains(neighbor) || !neighbor.Walkable  {
 				continue
 			}
 

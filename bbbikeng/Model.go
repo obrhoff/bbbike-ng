@@ -15,6 +15,8 @@ type Node struct {
 	PathFromParentNode []Point
 	ParentNode *Node
 
+	Walkable bool
+
 	Heuristic int
 
 	Value interface{}
@@ -62,7 +64,6 @@ func (f *base) SetPathFromGeoJSON(jsonInput string) {
 func (f base) GetGeoJSONPath() (jsonOutput string) {
 	return ConvertPathToGeoJSON(f.Path)
 }
-
 
 func (this *Node) Neighbors(potentialNeighbors []Node) (neighbors []Node) {
 
