@@ -115,7 +115,13 @@ func ParseData(path string) {
 		newStreet.Name = street.Name
 		newStreet.Type = street.Type
 		newStreet.Path = street.Path
-		bbbikeng.InsertStreetToDatabase(newStreet)
+
+		if len(newStreet.Path) > 1 {
+			bbbikeng.InsertStreetToDatabase(newStreet)
+		} else {
+			bbbikeng.InsertPlaceToDatabase(newStreet)
+		}
+
 	}
 
 	for i, cyclepath := range cyclepaths {
@@ -124,7 +130,9 @@ func ParseData(path string) {
 		newCyclepath.Name = cyclepath.Name
 		newCyclepath.Type = cyclepath.Type
 		newCyclepath.Path = cyclepath.Path
-		bbbikeng.InsertCyclePathToDatabase(newCyclepath)
+		if len(newCyclepath.Path) > 1 {
+			bbbikeng.InsertCyclePathToDatabase(newCyclepath)
+		}
 	}
 
 	for i, green := range greens {
@@ -133,7 +141,9 @@ func ParseData(path string) {
 		newGreen.Name = green.Name
 		newGreen.Type = green.Type
 		newGreen.Path = green.Path
-		bbbikeng.InsertGreenToDatabase(newGreen)
+		if len(newGreen.Path) > 1 {
+			bbbikeng.InsertGreenToDatabase(newGreen)
+		}
 	}
 
 	for i, quality := range qualitys {
@@ -142,7 +152,9 @@ func ParseData(path string) {
 		newQuality.Name = quality.Name
 		newQuality.Type = quality.Type
 		newQuality.Path = quality.Path
-		bbbikeng.InsertQualityToDatabase(newQuality)
+		if len(newQuality.Path) > 1 {
+			bbbikeng.InsertQualityToDatabase(newQuality)
+		}
 	}
 
 }

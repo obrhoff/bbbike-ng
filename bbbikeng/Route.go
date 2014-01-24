@@ -47,6 +47,9 @@ func GetRoute(from Point, to Point) (route Route){
 
 		if currentNode.NodeID == endNode.NodeID {
 			fmt.Println("Done!", currentNode)
+
+
+			return route
 		}
 
 		openList.Remove(currentNode)

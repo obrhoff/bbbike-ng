@@ -30,6 +30,21 @@ type Config struct {
 }
 
 
+func InsertPlaceToDatabase(place Street) {
+
+	var err error
+	points := geoJsonInsert(ConvertPathToGeoJSON(place.Path))
+	fixedName := strings.Replace(place.Name, "'", "''", -1)
+	query := fmt.Sprintf("INSERT INTO place (placeid, name, type, geometry) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(place.ID), fixedName, place.Type, points)
+
+	log.Println("DB:", query)
+
+	_, err = Connection.Exec(query)
+	if err != nil {
+		log.Fatal("Error inserting Place Into Database: %s", err.Error())
+	}
+}
+
 func InsertStreetToDatabase(street Street) {
 
 	var err error
