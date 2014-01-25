@@ -1,7 +1,6 @@
 package bbbikeng
 
 import (
-	"log"
 	"fmt"
 )
 
@@ -16,32 +15,40 @@ func GetRoute(from Point, to Point) (route Route){
 	startNode := FindNearestNode(from)
 	endNode := FindNearestNode(to)
 
-	log.Println("StartNode:", startNode.NodeID)
-	log.Println("EndNode:", endNode.NodeID)
+	fmt.Println("StartNode:", startNode.NodeID)
+	fmt.Println("EndNode:", endNode.NodeID)
 
-	var openList = NewNodeSet();
-	var closedList = NewNodeSet();
+	var openList = NewNodeSet()
+	var closedList = NewNodeSet()
 
 	openList.Add(startNode)
 
 	for openList.Length() > 0 {
 
-		lowLnd := -1
-		var currentNode Node
+		fmt.Println("OpenList Next:", openList.data)
 
-		for _, value := range openList.data {
-			score := value.DistanceFromParentNode + DistanceFromPointToPoint(value.NodeGeometry, endNode.NodeGeometry)
-			if score < lowLnd || lowLnd < 0 {
-				currentNode = value
+		var bestNode Node
+		bestNode.NodeID = -1
+		for _, node := range openList.data {
+			if bestNode.NodeID < 0 {
+				bestNode = node
+			} else {
+				if bestNode.F >= node.F {
+					bestNode = node
+				}
 			}
 		}
 
-		log.Println("CurrentNode", currentNode)
+		currentNode := bestNode
+		fmt.Println("Test Node: ", currentNode.NodeID, " H: ", currentNode.F)
 
 		if currentNode.NodeID == endNode.NodeID {
-			fmt.Println("Done!", currentNode)
 
-
+			var points []Point
+			for _, point := range currentNode.PathFromParentNode{
+				points = append(points, point.NodeGeometry)
+			}
+			fmt.Println("Done:", ConvertPathToGeoJSON(points))
 			return route
 		}
 
@@ -56,23 +63,27 @@ func GetRoute(from Point, to Point) (route Route){
 				continue
 			}
 
-			gScore := currentNode.DistanceFromParentNode + neighbor.DistanceFromParentNode
+			gScore := DistanceFromPointToPoint(currentNode.NodeGeometry, neighbor.NodeGeometry)
 			gScoreIsBest := false;
 
-			if !openList.Contains(neighbor) {
+			if !openList.ContainsByKey(neighbor.NodeID) {
 				gScoreIsBest = true;
 				neighbor.Heuristic = DistanceFromPointToPoint(neighbor.NodeGeometry, endNode.NodeGeometry)
 				openList.Add(neighbor)
-			} else if(gScore < neighbor.Heuristic) {
+			}
+			if(gScore < neighbor.Heuristic) {
 				gScoreIsBest = true;
 			}
 
 			if (gScoreIsBest) {
-
-
+					fmt.Println("Next Node: ", neighbor.NodeID, " H: ", neighbor.F)
+					openList.Remove(neighbor)
+					neighbor.G = gScore
+					neighbor.F = neighbor.G + neighbor.Heuristic
+					neighbor.PathFromParentNode = append(neighbor.PathFromParentNode, currentNode)
+					openList.Add(neighbor)
+					currentNode = neighbor
 			}
-
-
 		}
 
 

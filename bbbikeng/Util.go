@@ -23,7 +23,8 @@ type NodeSet struct {
 }
 
 func (this *NodeSet) Add(value Node) {
-	if !this.Contains(value) {
+	contains := this.Contains(value)
+	if !contains {
 		this.data[value.NodeID] = value
 	}
 }

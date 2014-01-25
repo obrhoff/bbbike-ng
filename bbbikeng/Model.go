@@ -7,17 +7,17 @@ type Node struct {
 
 	NodeID int
 	NodeGeometry Point
-
 	Streets []Street
 	Neigbors []Node
 
 	DistanceFromParentNode int
-	PathFromParentNode []Point
-	ParentNode *Node
+	PathFromParentNode []Node
 
 	Walkable bool
-
 	Heuristic int
+
+	G int
+	F int
 
 	Value interface{}
 
@@ -35,6 +35,12 @@ type City struct {
 	Country string
 	Geometry []Point
 }
+
+type Bla struct {
+	base
+	Node
+}
+
 
 type Street struct {
 	Name string
@@ -65,6 +71,7 @@ func (f base) GetGeoJSONPath() (jsonOutput string) {
 	return ConvertPathToGeoJSON(f.Path)
 }
 
+/*
 func (this *Node) Neighbors(potentialNeighbors []Node) (neighbors []Node) {
 
 	for _, street := range this.Streets {
@@ -116,3 +123,5 @@ func (this *Node) Neighbors(potentialNeighbors []Node) (neighbors []Node) {
 	return neighbors
 
 }
+
+*/

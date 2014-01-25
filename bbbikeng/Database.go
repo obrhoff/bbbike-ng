@@ -193,6 +193,7 @@ func FindNearestNode(point Point) (closestNode Node){
 	return GetNodeFromId(nodeid)
 }
 
+
 func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 
 //	rows, err := Connection.Query("SELECT nodeid, st_asgeojson(geometry), array_to_json(ways) as geometry FROM node t JOIN (select unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)", node.NodeID)
@@ -215,6 +216,7 @@ func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 			log.Fatal("Error Neighbor Nodes:", err)
 		}
 		json.Unmarshal([]byte(ways), &wayids)
+
 		/*
 		for _,id := range wayids {
 			street := GetStreetFromId(id)
@@ -222,12 +224,10 @@ func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 		}*/
 
 		newNode.NodeGeometry = ConvertGeoJSONtoPoint(geometry)
-		node.Neigbors = append(node.Neigbors, newNode)
+		nodes = append(nodes, newNode)
 	}
 
-
-
-	return node.Neigbors
+	return nodes
 
 }
 
@@ -255,7 +255,6 @@ func GetCyclepathFromStreet(street Street) (cyclepaths []Cyclepath) {
 	}
 
 	fmt.Println("Cyclepaths:", cyclepaths)
-
 	return cyclepaths
 }
 
