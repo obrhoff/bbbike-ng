@@ -11,13 +11,13 @@ type Node struct {
 	Neigbors []Node
 
 	DistanceFromParentNode int
-	PathFromParentNode []Node
+	ParentNodes *Node
 
 	Walkable bool
-	Heuristic int
+	Heuristic float64
 
-	G int
-	F int
+	G float64
+	F float64
 
 	Value interface{}
 

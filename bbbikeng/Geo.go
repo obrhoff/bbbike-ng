@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-const RADIUS = 6368500.0
+const RADIUS = 6371
 
 type Point struct {
 	Lat float64
@@ -58,20 +58,30 @@ func (f *Point) LatitudeLongitudeAsString() (lat string, lng string) {
 	return lat, lng
 }
 
-func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters int) {
+func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters float64) {
 
-	dLat, dLon := pointDifference(firstPoint, secondPoint)
-	dLat = degreeToRadians(dLat)
-	dLon = degreeToRadians(dLon)
+	/* var R = 6371; // km
+	var dLat = (lat2-lat1).toRad();
+	var dLon = (lon2-lon1).toRad();
+	var lat1 = lat1.toRad();
+	var lat2 = lat2.toRad();
+
+	var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
+	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+	var d = R * c;*/
+
+	dLat := degreeToRadians(secondPoint.Lat - firstPoint.Lat)
+	dLng := degreeToRadians(secondPoint.Lng - firstPoint.Lng)
 
 	lat1 := degreeToRadians(firstPoint.Lat)
 	lat2 := degreeToRadians(secondPoint.Lat)
 
-	a := math.Sin(dLat/2) * math.Sin(dLat/2) + math.Sin(dLon/2) * math.Sin(dLon/2) * math.Cos(lat1) * math.Cos(lat2)
+	a := math.Sin(dLat/2) * math.Sin(dLat/2) + math.Sin(dLng/2) * math.Sin(dLng/2) * math.Cos(lat1) * math.Cos(lat2)
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-	d := RADIUS * c
+	d := RADIUS * c;
 
-	return int(d)
+	return d
 
 }
 
@@ -88,7 +98,7 @@ func BearingBetweenPoints(firstSegment Point, secondSegment Point) (angle float6
 }
 
 
-func DistanceFromLinePoint(points []Point) (distance int) {
+func DistanceFromLinePoint(points []Point) (distance float64) {
 
 	for i := 0; i < len(points)-1; i++ {
 
@@ -101,9 +111,9 @@ func DistanceFromLinePoint(points []Point) (distance int) {
 
 }
 
-func DistanceFromPointToPath(point Point, path []Point) (distance int) {
+func DistanceFromPointToPath(point Point, path []Point) (distance float64) {
 
-	distance = -1
+	distance = -1.0
 	for i := 0; i < len(path)-1; i++ {
 
 		firstPoint := path[i]
@@ -130,7 +140,7 @@ func DistanceFromPointToPath(point Point, path []Point) (distance int) {
 
 func IntersectionFromPointToStreet(street Street, point Point) (intersection Point) {
 
-	lastDistance := -1
+	lastDistance := -1.0
 
 	for i := 0; i < len(street.Path)-1; i++ {
 

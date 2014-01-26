@@ -1,11 +1,13 @@
 package bbbikeng
 
 import (
+	"log"
 	"fmt"
 )
 
 type Route struct {
 
+	route GeoJSON
 
 }
 
@@ -15,8 +17,8 @@ func GetRoute(from Point, to Point) (route Route){
 	startNode := FindNearestNode(from)
 	endNode := FindNearestNode(to)
 
-	fmt.Println("StartNode:", startNode.NodeID)
-	fmt.Println("EndNode:", endNode.NodeID)
+	log.Println("StartNode:", startNode.NodeID)
+	log.Println("EndNode:", endNode.NodeID)
 
 	var openList = NewNodeSet()
 	var closedList = NewNodeSet()
@@ -24,8 +26,6 @@ func GetRoute(from Point, to Point) (route Route){
 	openList.Add(startNode)
 
 	for openList.Length() > 0 {
-
-		fmt.Println("OpenList Next:", openList.data)
 
 		var bestNode Node
 		bestNode.NodeID = -1
@@ -40,15 +40,19 @@ func GetRoute(from Point, to Point) (route Route){
 		}
 
 		currentNode := bestNode
-		fmt.Println("Test Node: ", currentNode.NodeID, " H: ", currentNode.F)
-
 		if currentNode.NodeID == endNode.NodeID {
 
+			fmt.Println("Backward from:", currentNode, " to ", *currentNode.ParentNodes, " To ", *currentNode.ParentNodes.ParentNodes)
+			var parentNode *Node
 			var points []Point
-			for _, point := range currentNode.PathFromParentNode{
-				points = append(points, point.NodeGeometry)
+			parentNode = currentNode.ParentNodes
+
+			for parentNode != nil {
+				points = append(points, parentNode.NodeGeometry)
+				parentNode = parentNode.ParentNodes
 			}
-			fmt.Println("Done:", ConvertPathToGeoJSON(points))
+
+			route = ConvertPathToGeoJSON(points)
 			return route
 		}
 
@@ -56,6 +60,8 @@ func GetRoute(from Point, to Point) (route Route){
 		closedList.Add(currentNode)
 
 		neighbors := GetNeighborNodesFromNode(currentNode);
+
+		log.Println("ParentNode:", currentNode.NodeID)
 
 		for _, neighbor := range neighbors {
 
@@ -76,13 +82,13 @@ func GetRoute(from Point, to Point) (route Route){
 			}
 
 			if (gScoreIsBest) {
-					fmt.Println("Next Node: ", neighbor.NodeID, " H: ", neighbor.F)
-					openList.Remove(neighbor)
-					neighbor.G = gScore
-					neighbor.F = neighbor.G + neighbor.Heuristic
-					neighbor.PathFromParentNode = append(neighbor.PathFromParentNode, currentNode)
-					openList.Add(neighbor)
-					currentNode = neighbor
+				openList.Remove(neighbor)
+				neighbor.G = gScore
+				neighbor.F = neighbor.G + neighbor.Heuristic
+				neighbor.ParentNodes = &currentNode
+				log.Println("Next Node: ", neighbor.NodeID, " H: ", neighbor.F, " ParentNode:", neighbor.ParentNodes.NodeID)
+				openList.Add(neighbor)
+				//currentNode = neighbor
 			}
 		}
 
@@ -90,4 +96,10 @@ func GetRoute(from Point, to Point) (route Route){
 	}
 
 	return route
+}
+
+func constructPath (finalNode Node) (path []Point) {
+
+
+	return path
 }
