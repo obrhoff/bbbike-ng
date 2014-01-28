@@ -99,7 +99,6 @@ func ConvertPathToGeoJSON(path []Point)(jsonOutput string) {
 		jsonData, err = json.Marshal(newJson)
 
 	} else {
-
 		var newJson GeoJSON
 		newJson.Type = "LineString"
 		for _, point := range path {
@@ -109,7 +108,6 @@ func ConvertPathToGeoJSON(path []Point)(jsonOutput string) {
 			newJson.Coordinates = append(newJson.Coordinates, newCoordinates)
 		}
 		jsonData, err = json.Marshal(newJson)
-
 	}
 
 	if err != nil {

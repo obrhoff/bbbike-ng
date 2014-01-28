@@ -22,6 +22,7 @@ type GeoJSONPoint struct {
 	Coordinates [2]float64
 }
 
+
 func (f *Point) SetCoordinates(lat float64, lng float64) {
 
 	f.Lat = lat;
@@ -30,7 +31,6 @@ func (f *Point) SetCoordinates(lat float64, lng float64) {
 }
 
 func (f *Point) Coordinates()(lat float64, lng float64) {
-
 	return f.Lat, f.Lng
 
 }

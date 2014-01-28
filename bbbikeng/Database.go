@@ -64,7 +64,6 @@ func InsertStreetToDatabase(street Street) {
 	}
 
 	log.Println("DB:", query)
-
 	_, err = Connection.Exec(query)
 	if err != nil {
 		log.Fatal("Error inserting Street Into Database: %s", err.Error())
@@ -121,12 +120,14 @@ func GetNodeFromId(id int) (node Node) {
 
 	var nodes string
 	var ways string
+	var geometry string
 
 	var nodesList []int
 	var wayList []int
-	var geometry string
 
-	err := Connection.QueryRow("select nodeid, ST_AsGeoJSON(geometry), array_to_json(ways), array_to_json(neighbors), walkable from node where nodeid = $1", id).Scan(&node.NodeID, &geometry, &ways, &nodes, &node.Walkable)
+	var newGeometry GeoJSON
+
+	err := Connection.QueryRow("select nodeid, ST_AsGeoJSON(geometry), array_to_json(waysegments), array_to_json(neighbors), walkable from node where nodeid = $1", id).Scan(&node.NodeID, &geometry, &ways, &nodes, &node.Walkable)
 
 	if err != nil {
 		log.Fatal("Error on getting Node from ID %s", err.Error())
@@ -134,12 +135,11 @@ func GetNodeFromId(id int) (node Node) {
 
 	json.Unmarshal([]byte(nodes), &nodesList)
 	json.Unmarshal([]byte(ways), &wayList)
-	node.NodeGeometry = ConvertGeoJSONtoPoint(geometry)
-	for _, waysid := range wayList {
-		nodeStreet := GetStreetFromId(waysid)
-		node.Streets = append(node.Streets, nodeStreet)
-	}
+	json.Unmarshal([]byte(geometry), &newGeometry)
 
+	fmt.Println("GeoJSON:", newGeometry)
+
+	node.NodeGeometry = ConvertGeoJSONtoPoint(geometry)
 	return node
 
 }
@@ -197,7 +197,7 @@ func FindNearestNode(point Point) (closestNode Node){
 func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 
 //	rows, err := Connection.Query("SELECT nodeid, st_asgeojson(geometry), array_to_json(ways) as geometry FROM node t JOIN (select unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)", node.NodeID)
-	rows, err := Connection.Query("SELECT nodeid, st_asgeojson(geometry), array_to_json(ways) as ways, walkable FROM node t JOIN (select unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)", node.NodeID)
+	rows, err := Connection.Query("SELECT nodeid, st_asgeojson(geometry), array_to_json(waysegments) as ways, walkable FROM node t JOIN (select unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)", node.NodeID)
 
 	if err != nil {
 		log.Fatal("Error fetching Neighbor Nodes:", err)
@@ -310,7 +310,7 @@ func SearchForStreetName(name string) (streets []Street) {
 
 	log.Println("Searching for Streetname:", name)
 
-	rows, err := Connection.Query("select streetpathid, name, type, ST_AsGeoJSON(path) from streetpaths where name ilike $1 LIMIT 10", ("%" + name + "%"))
+	rows, err := Connection.Query("select wayid, name, type, ST_AsGeoJSON(geometry) from way where name ilike $1 LIMIT 10", ("%" + name + "%"))
 	if err != nil {
 		log.Fatal("Error on opening database connection: %s", err.Error())
 	}
@@ -325,12 +325,8 @@ func SearchForStreetName(name string) (streets []Street) {
 		}
 
 		newStreet.SetPathFromGeoJSON(geometrys)
-	//	newStreet.SetIntersections()
-
 		streets = append(streets, newStreet)
-
 	}
-
 
 	return streets
 }

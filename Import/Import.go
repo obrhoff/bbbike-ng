@@ -22,7 +22,7 @@ type Generic struct {
 
 const untitled = "untitled path"
 
-const coordinateRegex = "[0-9]+,[0-9]+"
+const coordinateRegex = "[-+]?[0-9]+,[-+]?[0-9]+"
 const nameRegex = "^(.*)(\t)"
 const typeRegex = "\t+(.*?)\\s+"
 
@@ -75,9 +75,7 @@ func readLines(path string, fileName string) ([]Generic, error) {
 				point.Lat = lat
 				point.Lng = lng
 				newGeneric.Path = append(newGeneric.Path, point)
-
 			}
-
 			newGenerics = append(newGenerics, newGeneric)
 		}
 

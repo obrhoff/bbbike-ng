@@ -5,18 +5,6 @@ import (
 )
 
 
-type geojson struct {
-
-	Type string
-	coordinates []Point
-
-}
-
-func (this *geojson) ()String{
-
-}
-
-
 func (f *Point) PointIsValid() bool {
 
 	return f.Lat != 0.0 && f.Lng != 0.0

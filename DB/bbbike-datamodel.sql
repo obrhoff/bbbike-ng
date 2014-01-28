@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS trafficlight;
 DROP TABLE IF EXISTS node;
 DROP TABLE IF EXISTS way;
 DROP TABLE IF EXISTS place;
+DROP TABLE IF EXISTS way_segment;
 
 SELECT topology.DropTopology('way_topo');
 SELECT topology.DropTopology('place_topo');
@@ -26,6 +27,8 @@ CREATE TABLE public.way(
 	CONSTRAINT wayid PRIMARY KEY (wayid)
 );
 
+CREATE INDEX way_gix ON way USING GIST (geometry);
+
 CREATE TABLE public.place(
 	placeid bigserial,
 	name name,
@@ -36,6 +39,8 @@ CREATE TABLE public.place(
 	nodes bigint[],
 	CONSTRAINT placeid PRIMARY KEY (placeid)
 );
+
+CREATE INDEX place_gix ON place USING GIST (geometry);
 
 CREATE TABLE public.city(
 	name name,
@@ -50,6 +55,7 @@ CREATE TABLE public.cycleway(
 	geometry geometry(linestring, 4326),
 	CONSTRAINT cycleid PRIMARY KEY (cycleid)
 );
+CREATE INDEX cycleway_gix ON cycleway USING GIST (geometry);
 
 CREATE TABLE public.greenway(
 	greenwayid bigserial,
@@ -57,6 +63,7 @@ CREATE TABLE public.greenway(
 	type varchar,
 	CONSTRAINT greenwayid PRIMARY KEY (greenwayid)
 );
+CREATE INDEX greenway_gix ON greenway USING GIST (geometry);
 
 CREATE TABLE public.quality(
 	qualityid bigserial,
@@ -64,6 +71,7 @@ CREATE TABLE public.quality(
 	type varchar,
 	CONSTRAINT qualityid PRIMARY KEY (qualityid)
 );
+CREATE INDEX quality_gix ON quality USING GIST (geometry);
 
 CREATE TABLE public.trafficlight(
 	trafficlightid bigserial,
@@ -74,18 +82,24 @@ CREATE TABLE public.trafficlight(
 CREATE TABLE public.node(
 	nodeid bigserial,
 	geometry geometry(point, 4326),
-	ways bigint[],
+	waysegments bigint[],
 	neighbors bigint[],
 	walkable bool,
 	CONSTRAINT nodeid PRIMARY KEY (nodeid)
 );
 
-CREATE INDEX place_gix ON place USING GIST (geometry);
-CREATE INDEX way_nodes_idx ON way USING gin (nodes);
-CREATE INDEX nodes_neighbors_idx ON node USING gin (neighbors);
-CREATE INDEX node_ways_idx ON node USING gin (ways);
-CREATE INDEX way_gix ON way USING GIST (geometry);
-CREATE INDEX cycleway_gix ON cycleway USING GIST (geometry);
 CREATE INDEX node_gix ON node USING GIST (geometry);
-CREATE INDEX greenway_gix ON greenway USING GIST (geometry);
-CREATE INDEX quality_gix ON quality USING GIST (geometry);
+CREATE INDEX nodes_neighbors_idx ON node USING gin (neighbors);
+CREATE INDEX node_ways_idx ON node USING gin (waysegments);
+
+CREATE TABLE public.way_segment(
+    waysegmentid bigserial,
+    wayid bigint,
+    geometry geometry(linestring, 4326),
+    nodes bigint[],
+    CONSTRAINT waysegmentid PRIMARY KEY (waysegmentid)
+);
+
+CREATE INDEX way_segment_gix ON way_segment USING GIST (geometry);
+CREATE INDEX way_nodes_idx ON way_segment USING gin (nodes);
+

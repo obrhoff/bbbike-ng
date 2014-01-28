@@ -95,11 +95,9 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 
 	startPoint := bbbikeng.MakeNewPoint(startLat, startLng)
 	endPoint := bbbikeng.MakeNewPoint(endLat, endLng)
-
 	log.Printf("Start Routing from: %f,%f to %f,%f", startPoint.Lat, startPoint.Lng, endPoint.Lat, endPoint.Lng)
+	route := bbbikeng.GetAStarRoute(startPoint, endPoint)
 
-	route := bbbikeng.GetRoute(startPoint, endPoint)
-
-	w.WriteJson(&route)
+	w.WriteJson(route.GetGeojson())
 
 }
