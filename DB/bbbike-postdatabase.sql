@@ -5,7 +5,7 @@ SELECT topology.AddTopoGeometryColumn('network_topo', 'public', 'streetway', 'to
 SELECT topology.AddTopoGeometryColumn('network_topo', 'public', 'cycleway', 'topo_geom', 'LINESTRING');
 SELECT topology.AddTopoGeometryColumn('network_topo', 'public', 'greenway', 'topo_geom', 'LINESTRING');
 
-UPDATE way SET topo_geom = topology.toTopoGeom(geometry, 'network_topo', 1, 0.0);
+UPDATE streetway SET topo_geom = topology.toTopoGeom(geometry, 'network_topo', 1, 0.0);
 UPDATE cycleway SET topo_geom = topology.toTopoGeom(geometry, 'network_topo', 2, 0.0);
 UPDATE greenway SET topo_geom = topology.toTopoGeom(geometry, 'network_topo', 3, 0.0);
 

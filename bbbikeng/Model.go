@@ -33,12 +33,6 @@ type City struct {
 	Geometry []Point
 }
 
-type Bla struct {
-	base
-	Node
-}
-
-
 type Street struct {
 	Name string
 	Nodes []Node

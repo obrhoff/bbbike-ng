@@ -60,17 +60,6 @@ func (f *Point) LatitudeLongitudeAsString() (lat string, lng string) {
 
 func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters float64) {
 
-	/* var R = 6371; // km
-	var dLat = (lat2-lat1).toRad();
-	var dLon = (lon2-lon1).toRad();
-	var lat1 = lat1.toRad();
-	var lat2 = lat2.toRad();
-
-	var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
-	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-	var d = R * c;*/
-
 	dLat := degreeToRadians(secondPoint.Lat - firstPoint.Lat)
 	dLng := degreeToRadians(secondPoint.Lng - firstPoint.Lng)
 
@@ -101,14 +90,11 @@ func BearingBetweenPoints(firstSegment Point, secondSegment Point) (angle float6
 func DistanceFromLinePoint(points []Point) (distance float64) {
 
 	for i := 0; i < len(points)-1; i++ {
-
 		firstPoint := points[i]
 		secondPoint := points[i+1]
 		distance += DistanceFromPointToPoint(firstPoint, secondPoint)
 	}
-
 	return distance
-
 }
 
 func DistanceFromPointToPath(point Point, path []Point) (distance float64) {

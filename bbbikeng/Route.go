@@ -15,7 +15,7 @@ type Route struct {
 func constructRoute (finalNode Node) (route Route) {
 
 	var parentNode *Node
-	parentNode = finalNode.ParentNodes
+	parentNode = &finalNode
 	for parentNode != nil {
 		route.nodes = append(route.nodes, parentNode)
 		if parentNode.ParentNodes != nil {
@@ -34,6 +34,13 @@ func constructRoute (finalNode Node) (route Route) {
 	}
 
 	return route
+
+}
+
+func CalculateHeuristic(parentNode Node, neighborNode Node) (heuristic float64) {
+
+	heuristic = DistanceFromLinePoint(neighborNode.StreetFromParentNode.Path)
+	return heuristic
 
 }
 
