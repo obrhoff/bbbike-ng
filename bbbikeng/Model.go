@@ -4,12 +4,12 @@ type Node struct {
 
 	NodeID int
 	NodeGeometry Point
-	Streets []Street
 	Neigbors []Node
 
 	DistanceFromParentNode int
-	ParentNodes *Node
+	StreetFromParentNode Street
 
+	ParentNodes *Node
 	Walkable bool
 	Heuristic float64
 
