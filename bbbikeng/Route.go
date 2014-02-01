@@ -1,7 +1,7 @@
 package bbbikeng
 
 import (
-	"log"
+
 )
 
 type Route struct {
@@ -26,7 +26,7 @@ func constructRoute (finalNode Node) (route Route) {
 				}
 			} else {
 				for i := len(parentNode.StreetFromParentNode.Path)-1; i >= 0; i-- {
-					route.way = append(route.way, parentNode.StreetFromParentNode.Path[0])
+					route.way = append(route.way, parentNode.StreetFromParentNode.Path[i])
 				}
 			}
 		}
