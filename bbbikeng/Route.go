@@ -18,9 +18,7 @@ func constructRoute (finalNode Node) (route Route) {
 	parentNode = finalNode.ParentNodes
 	for parentNode != nil {
 		route.nodes = append(route.nodes, parentNode)
-		log.Println("Node:", parentNode.NodeID, "Geometry:", parentNode.NodeGeometry.Lat,",",parentNode.NodeGeometry.Lng)
 		if parentNode.ParentNodes != nil {
-
 			firstPoint := parentNode.StreetFromParentNode.Path[0]
 			if firstPoint.Compare(parentNode.NodeGeometry) {
 				for i := 0; i < len(parentNode.StreetFromParentNode.Path); i++ {
@@ -31,7 +29,6 @@ func constructRoute (finalNode Node) (route Route) {
 					route.way = append(route.way, parentNode.StreetFromParentNode.Path[0])
 				}
 			}
-			log.Println("Node:", parentNode.NodeID, "Geometry:", parentNode.NodeGeometry.Lat,",",parentNode.NodeGeometry.Lng)
 		}
 		parentNode = parentNode.ParentNodes
 	}
