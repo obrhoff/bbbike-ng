@@ -73,6 +73,7 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 
 	start, okStart := parameters["start"]
 	end, okEnd := parameters["end"]
+	format, okFormat := parameters["format"]
 
 	if !okStart || !okEnd {
 		return
@@ -96,8 +97,18 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 	startPoint := bbbikeng.MakeNewPoint(startLat, startLng)
 	endPoint := bbbikeng.MakeNewPoint(endLat, endLng)
 	log.Printf("Start Routing from: %f,%f to %f,%f", startPoint.Lat, startPoint.Lng, endPoint.Lat, endPoint.Lng)
-	route := bbbikeng.GetAStarRoute(startPoint, endPoint)
+	route := bbbikeng.GetBAStarRoute(startPoint, endPoint)
 
-	w.WriteJson(route.GetGeojson())
-
+	if !okFormat {
+		w.WriteJson(route.GetGeojson())
+	} else {
+		switch format[0] {
+			case "geojson":
+				w.WriteJson(route.GetGeojson())
+			case "bbybike":
+				w.WriteJson(route.GetBBJson())
+			default:
+				w.WriteJson(route.GetGeojson())
+		}
+	}
 }

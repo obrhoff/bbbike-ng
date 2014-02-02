@@ -9,7 +9,7 @@ UPDATE streetway SET topo_geom = topology.toTopoGeom(geometry, 'network_topo', 1
 UPDATE cycleway SET topo_geom = topology.toTopoGeom(geometry, 'network_topo', 2, 0.0);
 UPDATE greenway SET topo_geom = topology.toTopoGeom(geometry, 'network_topo', 3, 0.0);
 
-insert into network(foreignid, geometry, type) SELECT w.streetwayid, e.geom, w.type
+insert into network(foreignid, geometry, type) SELECT w.streetwayid, e.geom, w.type, w.name
 FROM network_topo.edge e,
      network_topo.relation rel,
      streetway w
