@@ -198,7 +198,7 @@ func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 
 //	rows, err := Connection.Query("SELECT nodeid, st_asgeojson(geometry), array_to_json(ways) as geometry FROM node t JOIN (select unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)", node.NodeID)
 //	rows, err := Connection.Query("SELECT nodeid, st_asgeojson(geometry), array_to_json(networks) as ways, walkable FROM node t JOIN (select unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)", node.NodeID)
-	rows, err := Connection.Query("SELECT neighbor.nodeid, networkid, type, st_asgeojson(neighbor.node_geo) as nodecoord, st_asgeojson(geometry) as path, neighbor.walkable FROM network, ( SELECT parent, nodeid, geometry as node_geo, walkable FROM node JOIN (select nodeid as parent, unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)) as neighbor WHERE network.nodes @> ARRAY[neighbor.parent,neighbor.nodeid]", node.NodeID)
+	rows, err := Connection.Query("SELECT neighbor.nodeid, networkid, type, name, st_asgeojson(neighbor.node_geo) as nodecoord, st_asgeojson(geometry) as path, neighbor.walkable FROM network, ( SELECT parent, nodeid, geometry as node_geo, walkable FROM node JOIN (select nodeid as parent, unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)) as neighbor WHERE network.nodes @> ARRAY[neighbor.parent,neighbor.nodeid]", node.NodeID)
 	if err != nil {
 		log.Fatal("Error fetching Neighbor Nodes:", err)
 	}
@@ -209,7 +209,7 @@ func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 		var newNode Node
 		var nodeGeometry string
 		var pathGeometry string
-		err := rows.Scan(&newNode.NodeID, &newNode.StreetFromParentNode.ID, &newNode.StreetFromParentNode.Type, &nodeGeometry, &pathGeometry, &newNode.Walkable)
+		err := rows.Scan(&newNode.NodeID, &newNode.StreetFromParentNode.ID, &newNode.StreetFromParentNode.Type, &newNode.StreetFromParentNode.Name, &nodeGeometry, &pathGeometry, &newNode.Walkable)
 		if err != nil {
 			log.Fatal("Error Neighbor Nodes:", err)
 		}

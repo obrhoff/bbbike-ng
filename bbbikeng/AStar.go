@@ -9,8 +9,8 @@ func GetAStarRoute(from Point, to Point) (route Route){
 	startNode := FindNearestNode(from)
 	endNode := FindNearestNode(to)
 
-	log.Println("StartNode:", startNode.NodeID)
-	log.Println("EndNode:", endNode.NodeID)
+	log.Println("StartNode:", startNode.NodeID , " Geometry:", startNode.NodeGeometry.Lat, "," ,startNode.NodeGeometry.Lng)
+	log.Println("EndNode:", endNode.NodeID , " Geometry:", endNode.NodeGeometry.Lat, "," ,endNode.NodeGeometry.Lng)
 
 	var openList = NewNodeSet()
 	var closedList = NewNodeSet()
@@ -34,6 +34,7 @@ func GetAStarRoute(from Point, to Point) (route Route){
 
 		currentNode := bestNode
 		log.Println("ParentNode:", currentNode.NodeID , " Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng)
+
 
 		if currentNode.NodeID == endNode.NodeID {
 			return constructRoute(currentNode)
@@ -67,7 +68,7 @@ func GetAStarRoute(from Point, to Point) (route Route){
 				neighbor.G = gScore
 				neighbor.F = neighbor.G + neighbor.Heuristic
 				neighbor.ParentNodes = &currentNode
-				log.Println("Next Node: ", neighbor.NodeID, " H: ", neighbor.F, " ParentNode:", neighbor.ParentNodes.NodeID)
+				log.Println("Next Node: ", neighbor.NodeID, " H: ", neighbor.F, " Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)
 				openList.Add(neighbor)
 				//currentNode = neighbor
 			}

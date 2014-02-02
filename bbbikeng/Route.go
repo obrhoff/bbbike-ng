@@ -16,20 +16,22 @@ func constructRoute (finalNode Node) (route Route) {
 
 	var parentNode *Node
 	parentNode = &finalNode
+
+	route.way = append(route.way, parentNode.NodeGeometry)
 	for parentNode != nil {
 		route.nodes = append(route.nodes, parentNode)
-		if parentNode.ParentNodes != nil {
-			firstPoint := parentNode.StreetFromParentNode.Path[0]
-			if firstPoint.Compare(parentNode.NodeGeometry) {
-				for i := 0; i < len(parentNode.StreetFromParentNode.Path); i++ {
-					route.way = append(route.way, parentNode.StreetFromParentNode.Path[i])
-				}
-			} else {
-				for i := len(parentNode.StreetFromParentNode.Path)-1; i >= 0; i-- {
-					route.way = append(route.way, parentNode.StreetFromParentNode.Path[i])
+			if len(parentNode.StreetFromParentNode.Path) > 0 {
+				firstPoint := parentNode.StreetFromParentNode.Path[0]
+				if firstPoint.Compare(parentNode.NodeGeometry) {
+					for i := 1; i < len(parentNode.StreetFromParentNode.Path); i++ {
+						route.way = append(route.way, parentNode.StreetFromParentNode.Path[i])
+					}
+				} else {
+					for i := len(parentNode.StreetFromParentNode.Path)-2; i >= 0; i-- {
+						route.way = append(route.way, parentNode.StreetFromParentNode.Path[i])
+					}
 				}
 			}
-		}
 		parentNode = parentNode.ParentNodes
 	}
 
