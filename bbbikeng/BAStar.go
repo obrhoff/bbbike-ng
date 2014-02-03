@@ -9,8 +9,8 @@ func GetBAStarRoute(from Point, to Point) (route Route){
 	startNode := FindNearestNode(from)
 	endNode := FindNearestNode(to)
 
-	beginNodeChannel := make(chan Node, 10)
-	endNodeChannel := make(chan Node, 10)
+	beginNodeChannel := make(chan Node, 3)
+	endNodeChannel := make(chan Node, 3)
 
 	finalBeginChannel := make(chan Node, 1)
 	finalEndChannel := make(chan Node, 1)
@@ -56,7 +56,6 @@ func startAstarRoute(startNode Node, endNode Node, inNodeChannel chan Node, outN
 
 		currentNode := bestNode
 
-		log.Println("ParentNode:", currentNode.NodeID , " Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng)
 		outNodeChannel <- currentNode
 		currentConcurrentNode := <-inNodeChannel
 
@@ -65,11 +64,12 @@ func startAstarRoute(startNode Node, endNode Node, inNodeChannel chan Node, outN
 			finalBeginChannel <- closedList.GetByKey(currentConcurrentNode.NodeID)
 			finalEndChannel <- currentConcurrentNode
 			return
-		} else if currentNode.NodeID == endNode.NodeID || currentConcurrentNode.NodeID == currentNode.NodeID  {
-			log.Println("jeogjegegheiugheu:", currentNode)
+		} else if currentConcurrentNode.NodeID == currentNode.NodeID  {
 			finalBeginChannel <- currentNode
 			finalEndChannel <- currentConcurrentNode
-
+			return
+ 		} else if currentNode.NodeID == endNode.NodeID {
+			log.Println("Error")
 			return
 		}
 
@@ -101,9 +101,7 @@ func startAstarRoute(startNode Node, endNode Node, inNodeChannel chan Node, outN
 				neighbor.G = gScore
 				neighbor.F = neighbor.G + neighbor.Heuristic
 				neighbor.ParentNodes = &currentNode
-			//	log.Println("Next Node: ", neighbor.NodeID, " H: ", neighbor.F, " Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)
 				openList.Add(neighbor)
-				//currentNode = neighbor
 			}
 		}
 	}

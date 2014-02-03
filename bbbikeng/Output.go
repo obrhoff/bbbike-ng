@@ -2,11 +2,21 @@ package bbbikeng
 
 type BBJSON struct {
 
-	response bool
-	distance int
-	time int
-	lights int
-	path [][2]float64
+	Response bool
+	Distance int
+	Time int
+	Lights int
+	Instruction []BBJSONInstruction
+	Path [][2]float64
 
 }
 
+type BBJSONInstruction struct {
+
+	PathIndex int
+	Roadname string
+	Type string
+	Quality string
+	Instruction string
+
+}

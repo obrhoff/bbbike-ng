@@ -8,87 +8,86 @@ DROP TABLE IF EXISTS city;
 
 DROP TABLE IF EXISTS place;
 
-DROP TABLE IF EXISTS streetway;
-DROP TABLE IF EXISTS cycleway;
-DROP TABLE IF EXISTS greenway;
+DROP TABLE IF EXISTS path;
+DROP TABLE IF EXISTS cyclepath;
+DROP TABLE IF EXISTS greenpath;
 
 DROP TABLE IF EXISTS quality;
 DROP TABLE IF EXISTS trafficlight;
 DROP TABLE IF EXISTS network;
 DROP TABLE IF EXISTS node;
 
-SELECT topology.DropTopology('network_topo');
+SELECT topology.DropTopology('path_topo');
 SELECT topology.DropTopology('place_topo');
 
-CREATE TABLE public.streetway(
-	streetwayid bigserial,
+CREATE TABLE public.path(
+	id bigserial,
 	name name,
 	type varchar,
 	geometry geometry(linestring, 4326),
 	city bigint,
 	nodes bigint[],
-	CONSTRAINT streetwayid PRIMARY KEY (streetwayid)
+	CONSTRAINT pathid PRIMARY KEY (id)
 );
 
-CREATE INDEX streetway_gix ON streetway USING GIST (geometry);
+CREATE INDEX streetway_gix ON path USING GIST (geometry);
 
 CREATE TABLE public.place(
-	placeid bigserial,
+	id bigserial,
 	name name,
 	type varchar,
 	geometry geometry(point, 4326),
 	city bigint,
 	nodes bigint[],
-	CONSTRAINT placeid PRIMARY KEY (placeid)
+	CONSTRAINT placeid PRIMARY KEY (id)
 );
 
 CREATE INDEX place_gix ON place USING GIST (geometry);
 
 CREATE TABLE public.city(
+	id bigserial,
 	name name,
 	geometry geometry(MULTIPOLYGON, 4326),
-	cityid bigserial,
-	CONSTRAINT cityid PRIMARY KEY (cityid)
+	CONSTRAINT cityid PRIMARY KEY (id)
 );
 
-CREATE TABLE public.cycleway(
-	cycleid bigserial,
+CREATE TABLE public.cyclepath(
+	id bigserial,
 	type varchar,
 	geometry geometry(linestring, 4326),
-	CONSTRAINT cycleid PRIMARY KEY (cycleid)
+	CONSTRAINT cycleid PRIMARY KEY (id)
 );
-CREATE INDEX cycleway_gix ON cycleway USING GIST (geometry);
+CREATE INDEX cyclepath_gix ON cyclepath USING GIST (geometry);
 
-CREATE TABLE public.greenway(
-	greenwayid bigserial,
+CREATE TABLE public.greenpath(
+	id bigserial,
 	geometry geometry(linestring, 4326),
 	type varchar,
-	CONSTRAINT greenwayid PRIMARY KEY (greenwayid)
+	CONSTRAINT greenwayid PRIMARY KEY (id)
 );
-CREATE INDEX greenway_gix ON greenway USING GIST (geometry);
+CREATE INDEX greenpath_gix ON greenpath USING GIST (geometry);
 
 CREATE TABLE public.quality(
-	qualityid bigserial,
+	id bigserial,
 	geometry geometry(linestring, 4326),
 	type varchar,
-	CONSTRAINT qualityid PRIMARY KEY (qualityid)
+	CONSTRAINT qualityid PRIMARY KEY (id)
 );
 
-CREATE INDEX quality_gix ON quality USING GIST (geometry);
+CREATE INDEX quality_gix ON quality USING GIST (id);
 CREATE TABLE public.trafficlight(
-	trafficlightid bigserial,
+	id bigserial,
 	geometry geometry(point, 4326),
-	CONSTRAINT trafficlightid PRIMARY KEY (trafficlightid)
+	CONSTRAINT trafficlightid PRIMARY KEY (id)
 );
 
 CREATE TABLE public.node(
-	nodeid bigserial,
+	id bigserial,
 	geometry geometry(point, 4326),
 	networks bigint[],
 	neighbors bigint[],
 	walkable bool,
-	trafficlight bool,
-	CONSTRAINT nodeid PRIMARY KEY (nodeid)
+	CONSTRAINT nodeid PRIMARY KEY (id)
 );
 
 CREATE INDEX node_gix ON node USING GIST (geometry);
@@ -96,14 +95,15 @@ CREATE INDEX nodes_neighbors_idx ON node USING gin (neighbors);
 CREATE INDEX node_ways_idx ON node USING gin (networks);
 
 CREATE TABLE public.network(
-    networkid bigserial,
-    foreignid bigint,
+    id bigserial,
     type varchar,
     geometry geometry(linestring, 4326),
     nodes bigint[],
+    attributes hstore NOT NULL DEFAULT,
     CONSTRAINT networkid PRIMARY KEY (networkid)
 );
 
-CREATE INDEX network_gix ON network USING GIST (geometry);
+CREATE INDEX attributes_idx ON network USING gin(attributes);
+CREATE INDEX network_idx ON network USING GIST (geometry);
 CREATE INDEX network_nodes_idx ON network USING gin (nodes);
 

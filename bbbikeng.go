@@ -41,6 +41,9 @@ func StartBBBikeServer() {
 
 	handler := rest.ResourceHandler{}
 		handler.EnableGzip = true
+		handler.DisableJsonIndent = true
+		handler.EnableRelaxedContentType = true
+		handler.EnableStatusService = true
 		handler.SetRoutes(
 		rest.Route{"GET", "/search?:", Search},
 		rest.Route{"GET", "/route?:", Route},
@@ -70,7 +73,6 @@ func Search(w *rest.ResponseWriter, req *rest.Request) {
 func Route(w *rest.ResponseWriter, req *rest.Request) {
 
 	parameters := req.URL.Query()
-
 	start, okStart := parameters["start"]
 	end, okEnd := parameters["end"]
 	format, okFormat := parameters["format"]
@@ -97,7 +99,7 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 	startPoint := bbbikeng.MakeNewPoint(startLat, startLng)
 	endPoint := bbbikeng.MakeNewPoint(endLat, endLng)
 	log.Printf("Start Routing from: %f,%f to %f,%f", startPoint.Lat, startPoint.Lng, endPoint.Lat, endPoint.Lng)
-	route := bbbikeng.GetBAStarRoute(startPoint, endPoint)
+	route := bbbikeng.GetAStarRoute(startPoint, endPoint)
 
 	if !okFormat {
 		w.WriteJson(route.GetGeojson())

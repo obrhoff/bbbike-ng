@@ -7,7 +7,7 @@ type Node struct {
 	Neigbors []Node
 
 	DistanceFromParentNode int
-	StreetFromParentNode Street
+	StreetFromParentNode Path
 
 	ParentNodes *Node
 	Walkable bool
@@ -17,6 +17,28 @@ type Node struct {
 	F float64
 
 	Value interface{}
+
+}
+
+
+type Path struct{
+
+	ID int
+	WayID int
+	Name string
+	Type string
+	PathIndex int
+	Path []Point
+	Attributes attributes
+
+}
+
+type attributes struct {
+
+	Quality string
+	Cyclepath string
+	Greenway string
+	TrafficLight bool
 
 }
 
