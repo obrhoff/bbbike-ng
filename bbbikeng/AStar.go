@@ -32,7 +32,7 @@ func GetAStarRoute(from Point, to Point) (route Route){
 		}
 
 		currentNode := bestNode
-		log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.Name,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng)
+		log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng)
 		if currentNode.NodeID == endNode.NodeID {
 			return constructRoute(currentNode)
 		}

@@ -99,9 +99,10 @@ CREATE TABLE public.network(
     type varchar,
     geometry geometry(linestring, 4326),
     nodes bigint[],
-    attributes hstore NOT NULL DEFAULT,
-    CONSTRAINT networkid PRIMARY KEY (networkid)
+    CONSTRAINT networkid PRIMARY KEY (id)
 );
+
+ALTER TABLE network ADD attributes HSTORE NOT NULL DEFAULT '';
 
 CREATE INDEX attributes_idx ON network USING gin(attributes);
 CREATE INDEX network_idx ON network USING GIST (geometry);

@@ -22,7 +22,8 @@ type Generic struct {
 
 const untitled = "untitled path"
 
-const coordinateRegex = "[-+]?[0-9]+,[-+]?[0-9]+"
+//const coordinateRegex = "[-+]?[0-9]+,[-+]?[0-9]+"
+const coordinateRegex = " ([-+\\d]?\\d+),([-+]?\\d+)"
 const nameRegex = "^(.*)(\t)"
 const typeRegex = "\t+(.*?)\\s+"
 
@@ -37,7 +38,7 @@ func readLines(path string, fileName string) ([]Generic, error) {
 	scanner := bufio.NewScanner(file)
 	nameRegex := regexp.MustCompile(nameRegex)
 	typeRegex := regexp.MustCompile(typeRegex)
-	coordsRegex := regexp.MustCompile(coordinateRegex)
+	coordsRegex := regexp.MustCompile(` ([-+\d]?\d+),([-+]?\d+)`)
 
 	var newGenerics []Generic
 
@@ -64,8 +65,8 @@ func readLines(path string, fileName string) ([]Generic, error) {
 			for _, coord := range coords {
 				splittedCoords := strings.Split(coord, ",")
 
-				xPath, err := strconv.ParseFloat(splittedCoords[1], 64)
-				yPath, err := strconv.ParseFloat(splittedCoords[0], 64)
+				xPath, err := strconv.ParseFloat(strings.Replace(splittedCoords[1], " ", "", -1), 64)
+				yPath, err := strconv.ParseFloat(strings.Replace(splittedCoords[0], " ", "", -1), 64)
 				if err != nil {
 					panic(err)
 				}
@@ -75,6 +76,8 @@ func readLines(path string, fileName string) ([]Generic, error) {
 				point.Lat = lat
 				point.Lng = lng
 				newGeneric.Path = append(newGeneric.Path, point)
+
+
 			}
 			newGenerics = append(newGenerics, newGeneric)
 		}
