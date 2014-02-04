@@ -44,7 +44,7 @@ func GetAStarRoute(from Point, to Point) (route Route){
 
 		for _, neighbor := range neighbors {
 
-			if closedList.Contains(neighbor) || !neighbor.Walkable  {
+			if closedList.Contains(neighbor) || (!neighbor.Walkable && neighbor.NodeID != endNode.NodeID)  {
 				continue
 			}
 
