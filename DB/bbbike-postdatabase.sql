@@ -9,12 +9,12 @@ UPDATE path SET topo_geom = topology.toTopoGeom(geometry, 'path_topo', 1, 0.0);
 UPDATE cyclepath SET topo_geom = topology.toTopoGeom(geometry, 'path_topo', 2, 0.0);
 UPDATE greenpath SET topo_geom = topology.toTopoGeom(geometry, 'path_topo', 3, 0.0);
 
-insert into network(geometry, type, name, wayid) SELECT e.geom, w.type, w.name, w.id
+insert into network (type, name, geometry, wayid)SELECT r.type, r.name, e.geom, r.id
 FROM path_topo.edge e,
-    path_topo.relation rel,
-    path w
+     path_topo.relation rel,
+     path r
 WHERE e.edge_id = rel.element_id
-AND rel.topogeo_id = (r.topo_geom).id;
+  AND rel.topogeo_id = (r.topo_geom).id;
 
 insert into network(geometry, type) SELECT e.geom, w.type
 FROM path_topo.edge e,
@@ -36,12 +36,12 @@ select st_startpoint(geometry) as point from network) as points;
 
 UPDATE node
 SET networks = subquery.networks
-FROM ( SELECT node.id, array_agg(network.networkid) AS networks FROM network, node WHERE ST_Intersects(network.geometry, node.geometry) GROUP BY node.id ) AS subquery
+FROM ( SELECT node.id, array_agg(network.id) AS networks FROM network, node WHERE ST_Intersects(network.geometry, node.geometry) GROUP BY node.id ) AS subquery
 WHERE subquery.id = node.id;
 
 UPDATE network
 SET nodes = subquery.nodes
-FROM (select networks.networkid, array_agg(n1.id) as nodes from node as n1, (select networkid from network) as networks where n1.networks @> ARRAY[networkid] group by networkid) as subquery where network.networkid = subquery.networkid;
+FROM (select networks.networkid as networkid, array_agg(n1.id) as nodes from node as n1, (select networkid from network) as networks where n1.networks @> ARRAY[networkid] group by networkid) as subquery where network.networkid = subquery.networkid;
 
 UPDATE node
 SET neighbors = subquery.neighbors

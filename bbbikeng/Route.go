@@ -28,31 +28,45 @@ func constructRoute (finalNode Node) (route Route) {
 	for i := len(route.nodes)-2; i >= 0; i-- {
 		tmpNodeList = append(tmpNodeList, route.nodes[i])
 	}
+
 	route.nodes = tmpNodeList
+
+	startNode := route.nodes[0]
+	endNode := route.nodes[len(route.nodes)-1]
 
 	for _, node := range route.nodes {
 
-		// needs to be fixed for first node
-		node.StreetFromParentNode.PathIndex = len(route.way)
-		if (len(route.detailed) > 0  && (route.detailed[len(route.detailed)-1].WayID != node.StreetFromParentNode.WayID) && route.detailed[len(route.detailed)-1].Name != node.StreetFromParentNode.Name ) || len(route.detailed) < 1{
-			route.detailed = append(route.detailed, &node.StreetFromParentNode)
-		}
+		streetPath := flippPath(node)
+		if node.NodeID == startNode.NodeID || node.NodeID == endNode.NodeID {
 
-		// build up the actually path
-		if len(node.StreetFromParentNode.Path) > 0 {
-			firstPoint := node.StreetFromParentNode.Path[0]
-			if !firstPoint.Compare(node.NodeGeometry) {
-				for i := 1; i < len(node.StreetFromParentNode.Path); i++ {
-					route.way = append(route.way, node.StreetFromParentNode.Path[i])
-				}
+		// needs to be fixed for first node
+
+			var index int
+			if node.NodeID == startNode.NodeID {
+				index = 0
 			} else {
-				for i := len(node.StreetFromParentNode.Path)-2; i >= 0; i-- {
-					route.way = append(route.way, node.StreetFromParentNode.Path[i])
-				}
+				index = len(route.way)-1
+			}
+			node.StreetFromParentNode.PathIndex = index
+			route.detailed = append(route.detailed, &node.StreetFromParentNode)
+
+			for i := 0; i < len(node.StreetFromParentNode.Path); i++ {
+				route.way = append(route.way, node.StreetFromParentNode.Path[i])
+			}
+
+
+		} else {
+
+			if route.detailed[len(route.detailed)-1].WayID != node.StreetFromParentNode.WayID && route.detailed[len(route.detailed)-1].Name != node.StreetFromParentNode.Name {
+				node.StreetFromParentNode.PathIndex = len(route.way)-1
+				route.detailed = append(route.detailed, &node.StreetFromParentNode)
+			}
+
+			for i := 1; i < len(streetPath); i++ {
+				route.way = append(route.way, streetPath[i])
 			}
 
 		}
-
 	}
 
 	return route
@@ -64,6 +78,22 @@ func CalculateHeuristic(parentNode Node, neighborNode Node) (heuristic float64) 
 	heuristic = DistanceFromLinePoint(neighborNode.StreetFromParentNode.Path)
 	return heuristic
 
+}
+
+func flippPath(node *Node) (path []Point) {
+
+	firstPoint := node.NodeGeometry
+	if firstPoint.Compare(node.StreetFromParentNode.Path[0]) {
+		var flippedPath []Point
+		for i := len(node.StreetFromParentNode.Path)-1; i >= 0; i-- {
+
+			point := node.StreetFromParentNode.Path[i]
+			flippedPath = append(flippedPath, point)
+		}
+		return flippedPath
+	}
+
+	return node.StreetFromParentNode.Path
 }
 
 func (this *Route) GetGeojson() (geojson GeoJSON) {

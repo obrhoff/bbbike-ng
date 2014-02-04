@@ -99,6 +99,8 @@ CREATE TABLE public.network(
     type varchar,
     geometry geometry(linestring, 4326),
     nodes bigint[],
+    name name,
+    wayid bigint,
     CONSTRAINT networkid PRIMARY KEY (id)
 );
 
