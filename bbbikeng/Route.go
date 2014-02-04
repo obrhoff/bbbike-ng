@@ -25,12 +25,19 @@ func constructRoute (finalNode Node) (route Route) {
 	}
 	// reverse list
 	var tmpNodeList []*Node
-	for i := len(route.nodes)-1; i >= 0; i-- {
+	for i := len(route.nodes)-2; i >= 0; i-- {
 		tmpNodeList = append(tmpNodeList, route.nodes[i])
 	}
 	route.nodes = tmpNodeList
 
 	for _, node := range route.nodes {
+
+		// needs to be fixed for first node
+		node.StreetFromParentNode.PathIndex = len(route.way)
+		if (len(route.detailed) > 0  && (route.detailed[len(route.detailed)-1].WayID != node.StreetFromParentNode.WayID) && route.detailed[len(route.detailed)-1].Name != node.StreetFromParentNode.Name ) || len(route.detailed) < 1{
+			route.detailed = append(route.detailed, &node.StreetFromParentNode)
+		}
+
 		// build up the actually path
 		if len(node.StreetFromParentNode.Path) > 0 {
 			firstPoint := node.StreetFromParentNode.Path[0]
@@ -43,11 +50,7 @@ func constructRoute (finalNode Node) (route Route) {
 					route.way = append(route.way, node.StreetFromParentNode.Path[i])
 				}
 			}
-			// needs to be fixed for first node
-			node.StreetFromParentNode.PathIndex = len(route.way)-1
-			if (len(route.detailed) > 0  && (route.detailed[len(route.detailed)-1].WayID != node.StreetFromParentNode.WayID) && route.detailed[len(route.detailed)-1].Name != node.StreetFromParentNode.Name ) || len(route.detailed) < 1{
-				route.detailed = append(route.detailed, &node.StreetFromParentNode)
-			}
+
 		}
 
 	}
@@ -88,7 +91,7 @@ func (this *Route) GetBBJson() (json BBJSON) {
 	for _, path := range this.detailed {
 
 		var newInstruction BBJSONInstruction
-		newInstruction.Roadname = path.Name
+		newInstruction.Name = path.Name
 		newInstruction.PathIndex = path.PathIndex
 		newInstruction.Type = path.Type
 		newInstruction.Quality = path.Attributes.Quality

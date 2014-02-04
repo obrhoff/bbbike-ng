@@ -9,8 +9,8 @@ func GetAStarRoute(from Point, to Point) (route Route){
 	startNode := FindNearestNode(from)
 	endNode := FindNearestNode(to)
 
-	log.Println("StartNode:", startNode.NodeID , " Geometry:", startNode.NodeGeometry.Lat, "," ,startNode.NodeGeometry.Lng)
-	log.Println("EndNode:", endNode.NodeID , " Geometry:", endNode.NodeGeometry.Lat, "," ,endNode.NodeGeometry.Lng)
+	log.Println("StartNode:", startNode.NodeID , "(",startNode.StreetFromParentNode.Name,") Geometry:", startNode.NodeGeometry.Lat, "," ,startNode.NodeGeometry.Lng)
+	log.Println("EndNode:", endNode.NodeID , "(",endNode.StreetFromParentNode.Name,") Geometry:", endNode.NodeGeometry.Lat, "," ,endNode.NodeGeometry.Lng)
 
 	var openList = NewNodeSet()
 	var closedList = NewNodeSet()
@@ -67,7 +67,6 @@ func GetAStarRoute(from Point, to Point) (route Route){
 				neighbor.ParentNodes = &currentNode
 				log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)
 				openList.Add(neighbor)
-				//currentNode = neighbor
 			}
 		}
 	}

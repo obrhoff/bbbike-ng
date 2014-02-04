@@ -14,7 +14,7 @@ type BBJSON struct {
 type BBJSONInstruction struct {
 
 	PathIndex int
-	Roadname string
+	Name string
 	Type string
 	Quality string
 	Instruction string
