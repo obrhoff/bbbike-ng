@@ -14,7 +14,7 @@ type BBJSON struct {
 
 type BBJSONInstruction struct {
 
-	PathIndex int
+	Index int
 	Name string
 	Type string
 	Quality string

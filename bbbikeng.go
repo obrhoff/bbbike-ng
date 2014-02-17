@@ -41,7 +41,7 @@ func StartBBBikeServer() {
 
 	handler := rest.ResourceHandler{}
 		handler.EnableGzip = true
-		handler.DisableJsonIndent = false
+		handler.DisableJsonIndent = true
 		handler.EnableRelaxedContentType = false
 		handler.EnableStatusService = true
 		handler.SetRoutes(

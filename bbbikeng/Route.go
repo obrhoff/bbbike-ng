@@ -207,7 +207,7 @@ func (this *Route) GetBBJson() (json BBJSON) {
 	for _, path := range this.detailed {
 		var newInstruction BBJSONInstruction
 		newInstruction.Name = path.Name
-		newInstruction.PathIndex = path.PathIndex
+		newInstruction.Index = path.PathIndex
 		newInstruction.Type = path.Type
 		newInstruction.Quality = path.Attributes.Quality
 		json.Instruction = append(json.Instruction, newInstruction)

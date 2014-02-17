@@ -32,8 +32,6 @@ FROM path_topo.edge e,
 WHERE e.edge_id = rel.element_id
   AND rel.topogeo_id = (r.topo_geom).id;
 
-
-
 insert into node (geometry) select distinct points.point from (select st_endpoint(geometry) as point from network
 union
 select st_startpoint(geometry) as point from network) as points;
