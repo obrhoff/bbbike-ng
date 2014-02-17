@@ -67,19 +67,30 @@ CREATE TABLE public.greenpath(
 );
 CREATE INDEX greenpath_gix ON greenpath USING GIST (geometry);
 
+
+CREATE TABLE public.unlitpath(
+	id bigserial,
+	geometry geometry(linestring, 4326)
+);
+CREATE INDEX unlitpath_gix ON unlitpath USING GIST (geometry);
+
+
 CREATE TABLE public.quality(
 	id bigserial,
 	geometry geometry(linestring, 4326),
 	type varchar,
 	CONSTRAINT qualityid PRIMARY KEY (id)
 );
+CREATE INDEX quality_gix ON quality USING GIST (geometry);
 
-CREATE INDEX quality_gix ON quality USING GIST (id);
 CREATE TABLE public.trafficlight(
 	id bigserial,
+	type varchar,
 	geometry geometry(point, 4326),
 	CONSTRAINT trafficlightid PRIMARY KEY (id)
 );
+CREATE INDEX trafficlight_gix ON trafficlight USING GIST (geometry);
+
 
 CREATE TABLE public.node(
 	id bigserial,

@@ -41,8 +41,8 @@ func StartBBBikeServer() {
 
 	handler := rest.ResourceHandler{}
 		handler.EnableGzip = true
-		handler.DisableJsonIndent = true
-		handler.EnableRelaxedContentType = true
+		handler.DisableJsonIndent = false
+		handler.EnableRelaxedContentType = false
 		handler.EnableStatusService = true
 		handler.SetRoutes(
 		rest.Route{"GET", "/search?:", Search},
@@ -77,6 +77,15 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 	end, okEnd := parameters["end"]
 	format, okFormat := parameters["format"]
 
+	quality, okQuality := parameters["quality"]
+	types, okTypes := parameters["types"]
+	greenways, okGreen := parameters["green"]
+	unlit, okUnlit := parameters["unlit"]
+	trafficLight, okTrafficLight := parameters["lights"]
+	speed, okSpeed := parameters["speed"]
+	ferries, okFerries := parameters["ferries"]
+
+
 	if !okStart || !okEnd {
 		return
 	}
@@ -98,8 +107,54 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 
 	startPoint := bbbikeng.MakeNewPoint(startLat, startLng)
 	endPoint := bbbikeng.MakeNewPoint(endLat, endLng)
+	var route bbbikeng.Route
+
+
+	if okQuality {
+		route.Preferences.SetPreferedQuality(quality[0])
+	}
+
+	if okTypes {
+		route.Preferences.SetPreferedTypes(types[0])
+	}
+
+	if okGreen {
+		route.Preferences.SetPreferedGreen(greenways[0])
+	}
+
+	if okSpeed {
+		PreferedSpeed, speedParseError := strconv.ParseInt(speed[0], 0, 64)
+		if (speedParseError == nil) {
+			route.Preferences.SetPreferedSpeed(PreferedSpeed)
+		}
+	}
+
+	if okUnlit {
+		AvoidUnlit, unlitParseError := strconv.ParseBool(unlit[0])
+		if (unlitParseError == nil) {
+			route.Preferences.SetAvoidUnlit(AvoidUnlit)
+		}
+	}
+
+
+	if okTrafficLight {
+		AvoidTrafficLight, trafficLightParseError := strconv.ParseBool(trafficLight[0])
+		if (trafficLightParseError == nil) {
+			route.Preferences.SetAvoidTrafficLight(AvoidTrafficLight)
+		}
+	}
+
+	if okFerries {
+		IncludeFerries, ferriesParseError := strconv.ParseBool(ferries[0])
+		if (ferriesParseError == nil) {
+			route.Preferences.SetIncludeFerries(IncludeFerries)
+		}
+
+	}
+
 	log.Printf("Start Routing from: %f,%f to %f,%f", startPoint.Lat, startPoint.Lng, endPoint.Lat, endPoint.Lng)
-	route := bbbikeng.GetAStarRoute(startPoint, endPoint)
+	log.Printf("Preferences:", route.Preferences)
+	route.StartRouting(startPoint, endPoint)
 
 	if !okFormat {
 		w.WriteJson(route.GetGeojson())

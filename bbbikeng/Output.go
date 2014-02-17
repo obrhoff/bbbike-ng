@@ -3,6 +3,7 @@ package bbbikeng
 type BBJSON struct {
 
 	Response bool
+	Preferences Preferences
 	Distance int
 	Time int
 	Lights int

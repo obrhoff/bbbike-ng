@@ -29,6 +29,25 @@ type Config struct {
 	Debug bool
 }
 
+func InsertCityToDatabase(city City) {
+
+	var err error
+	points := geoJsonInsert(ConvertPathToGeoJSON(city.Geometry))
+	fixedName := strings.Replace(city.Name, "'", "''", -1)
+
+	var query string
+	if city.ID != 0 {
+		query = fmt.Sprintf("INSERT INTO path(id ,name, geometry) VALUES (%s, '%s', '%s', %s)", strconv.Itoa(city.ID), fixedName, points)
+	} else {
+		query = fmt.Sprintf("INSERT INTO city (name, geometry) VALUES ('%s', %s)", fixedName, points)
+	}
+
+	log.Println("DB:", query)
+	_, err = Connection.Exec(query)
+	if err != nil {
+		log.Fatal("Error inserting Street Into Database: %s", err.Error())
+	}
+}
 
 func InsertPlaceToDatabase(place Street) {
 
@@ -116,6 +135,33 @@ func InsertQualityToDatabase(quality Street) {
 
 }
 
+
+func InsertStreetLightToDatabase(light Street) {
+
+	var err error
+	points := geoJsonInsert(ConvertPathToGeoJSON(light.Path))
+	query := fmt.Sprintf("INSERT INTO trafficlight(type, geometry) VALUES ('%s', %s)", light.Type, points)
+	log.Println("DB:", query)
+	_, err = Connection.Exec(query)
+
+	if err != nil {
+		log.Fatal("Error inserting Light Into Database: %s", err.Error())
+	}
+}
+
+func InsertUnlitToDatabase(light Street) {
+
+	var err error
+	points := geoJsonInsert(ConvertPathToGeoJSON(light.Path))
+	query := fmt.Sprintf("INSERT INTO unlitpath(geometry) VALUES (%s)", points)
+	log.Println("DB:", query)
+	_, err = Connection.Exec(query)
+
+	if err != nil {
+		log.Fatal("Error inserting Unlit Into Database: %s", err.Error())
+	}
+}
+
 func GetNodeFromId(id int) (node Node) {
 
 	var nodes string
@@ -127,7 +173,7 @@ func GetNodeFromId(id int) (node Node) {
 
 	var newGeometry GeoJSON
 
-	err := Connection.QueryRow("select id, ST_AsGeoJSON(geometry), array_to_json(networks), array_to_json(neighbors), walkable from node where id = $1", id).Scan(&node.NodeID, &geometry, &ways, &nodes, &node.Walkable)
+	err := Connection.QueryRow("select id, ST_AsGeoJSON(geometry), array_to_json(networks), array_to_json(neighbors), walkable, trafficlight from node where id = $1", id).Scan(&node.NodeID, &geometry, &ways, &nodes, &node.Walkable, &node.TrafficLight)
 
 	if err != nil {
 		log.Fatal("Error on getting Node from ID %s", err.Error())
@@ -197,9 +243,7 @@ func FindNearestNode(point Point) (closestNode Node){
 
 func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 
-//	rows, err := Connection.Query("SELECT nodeid, st_asgeojson(geometry), array_to_json(ways) as geometry FROM node t JOIN (select unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)", node.NodeID)
-//	rows, err := Connection.Query("SELECT nodeid, st_asgeojson(geometry), array_to_json(networks) as ways, walkable FROM node t JOIN (select unnest(neighbors) as nodeid from node where nodeid = $1) x USING (nodeid)", node.NodeID)
-	rows, err := Connection.Query("SELECT neighbor.id, networkid, wayid, type, hstore_to_json(attributes), name, st_asgeojson(neighbor.node_geo) as nodecoord, st_asgeojson(geometry) as path, neighbor.walkable FROM network, ( SELECT parent, id, geometry as node_geo, walkable FROM node JOIN (select id as parent, unnest(neighbors) as id from node where id = $1) x USING (id)) as neighbor WHERE network.nodes @> ARRAY[neighbor.parent,neighbor.id]", node.NodeID)
+	rows, err := Connection.Query("SELECT neighbor.id, networkid, wayid, type, hstore_to_json(attributes), name, st_asgeojson(neighbor.node_geo) as nodecoord, st_asgeojson(geometry) as path, neighbor.walkable, neighbor.trafficlight FROM network, ( SELECT parent, id, geometry as node_geo, walkable, trafficlight FROM node JOIN (select id as parent, unnest(neighbors) as id from node where id = $1) x USING (id)) as neighbor WHERE network.nodes @> ARRAY[neighbor.parent,neighbor.id]", node.NodeID)
 	if err != nil {
 		log.Fatal("Error fetching Neighbor Nodes:", err)
 	}
@@ -212,7 +256,7 @@ func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 		var pathGeometry string
 		var attributes string
 
-		err := rows.Scan(&newNode.NodeID, &newNode.StreetFromParentNode.ID, &newNode.StreetFromParentNode.WayID, &newNode.StreetFromParentNode.Type, &attributes,&newNode.StreetFromParentNode.Name, &nodeGeometry, &pathGeometry, &newNode.Walkable)
+		err := rows.Scan(&newNode.NodeID, &newNode.StreetFromParentNode.ID, &newNode.StreetFromParentNode.WayID, &newNode.StreetFromParentNode.Type, &attributes,&newNode.StreetFromParentNode.Name, &nodeGeometry, &pathGeometry, &newNode.Walkable, &newNode.TrafficLight)
 		if err != nil {
 			log.Fatal("Error Neighbor Nodes:", err)
 		}

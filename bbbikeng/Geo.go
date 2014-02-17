@@ -58,6 +58,22 @@ func (f *Point) LatitudeLongitudeAsString() (lat string, lng string) {
 	return lat, lng
 }
 
+func flippPath(node *Node) (path []Point) {
+
+	firstPoint := node.NodeGeometry
+	if firstPoint.Compare(node.StreetFromParentNode.Path[0]) {
+		var flippedPath []Point
+		for i := len(node.StreetFromParentNode.Path)-1; i >= 0; i-- {
+
+			point := node.StreetFromParentNode.Path[i]
+			flippedPath = append(flippedPath, point)
+		}
+		return flippedPath
+	}
+
+	return node.StreetFromParentNode.Path
+}
+
 func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters float64) {
 
 	dLat := degreeToRadians(secondPoint.Lat - firstPoint.Lat)

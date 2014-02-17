@@ -16,6 +16,7 @@ type Node struct {
 	G float64
 	F float64
 
+	TrafficLight bool
 	Value interface{}
 
 }
@@ -34,12 +35,10 @@ type Path struct{
 }
 
 type attributes struct {
-
 	Quality string
 	Cyclepath string
 	Greenway string
-	TrafficLight bool
-
+	unlit string
 }
 
 type base struct {
@@ -50,7 +49,7 @@ type base struct {
 
 type City struct {
 	ID int
-	base
+	Name string
 	Country string
 	Geometry []Point
 }

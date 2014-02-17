@@ -90,31 +90,33 @@ func readLines(path string, fileName string) ([]Generic, error) {
 func ParseData(path string) {
 
 	log.Println("Parsing Pathdata.")
-	//citys, fileErr := readLines(path, "Berlin")
+//	citys, fileErr := readLines(path, "Berlin")
+
 	streets, fileErr := readLines(path, "strassen")
 	places, fileErr := readLines(path, "plaetze")
-
 	for _, place := range places {
 		streets = append(streets, place)
 	}
 
-	cyclepaths, fileErr := readLines(path, "radwege")
-	greens, fileErr := readLines(path, "green")
 	qualitys, fileErr := readLines(path, "qualitaet_s")
-
+	cyclepaths, fileErr := readLines(path, "radwege_exact")
+	greens, fileErr := readLines(path, "green")
+	lights, fileErr := readLines(path, "ampeln");
+	unlits, fileErr := readLines(path, "nolighting");
 
 	if fileErr != nil {
 		log.Fatalf("Failed reading Strassen File: %s", fileErr)
 	}
 
+
 	/*
-	for i, city := range citys {
+	for _, city := range citys {
 		var newCity bbbikeng.City
-		newCity.CityID = i
 		newCity.Name = city.Name
-		newCity.Border = city.Path
+		newCity.Geometry = city.Path
 		bbbikeng.InsertCityToDatabase(newCity)
 	} */
+
 
 	for _, street := range streets {
 		var newStreet bbbikeng.Street
@@ -160,6 +162,19 @@ func ParseData(path string) {
 		if len(newQuality.Path) > 1 {
 			bbbikeng.InsertQualityToDatabase(newQuality)
 		}
+	}
+
+	for _, lights := range lights {
+		var newLight bbbikeng.Street
+		newLight.Type = lights.Type
+		newLight.Path = lights.Path
+		bbbikeng.InsertStreetLightToDatabase(newLight);
+	}
+
+	for _, unlit := range unlits {
+		var newUnlit bbbikeng.Street
+		newUnlit.Path = unlit.Path
+		bbbikeng.InsertUnlitToDatabase(newUnlit);
 	}
 
 }

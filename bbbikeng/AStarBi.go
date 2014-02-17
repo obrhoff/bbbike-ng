@@ -27,7 +27,7 @@ func GetBAStarRoute(from Point, to Point) (route Route){
 	log.Println("FinalBeginNode:", finalBeginNode)
 	log.Println("FinalEndNode:", finalEndNode)
 
-	route = constructRoute(finalEndNode)
+//	route = constructRoute(finalEndNode)
 
 	return route
 

@@ -99,8 +99,24 @@ func ConvertPathToGeoJSON(path []Point)(jsonOutput string) {
 		jsonData, err = json.Marshal(newJson)
 
 	} else {
+
 		var newJson GeoJSON
+		/*isMultiPolygon := false;
+		for _, point := range path {
+			if (point.Compare(path[0])) {
+				isMultiPolygon = true
+			}
+		} */
+
 		newJson.Type = "LineString"
+
+		/*
+		if isMultiPolygon {
+			newJson.Type = "MultiPolygon"
+		} else {
+			newJson.Type = "LineString"
+		} */
+
 		for _, point := range path {
 			var newCoordinates [2]float64
 			newCoordinates[1] = point.Lat
