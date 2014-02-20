@@ -260,7 +260,10 @@ func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 		if err != nil {
 			log.Fatal("Error Neighbor Nodes:", err)
 		}
-		json.Unmarshal([]byte(attributes), &newNode.StreetFromParentNode.Attributes)
+		//json.Unmarshal([]byte(attributes), &newNode.StreetFromParentNode.Attributes)
+
+		attributes = strings.Replace(attributes, "\\", "", -1)
+		log.Println("Attributes:", attributes)
 
 		newNode.NodeGeometry = ConvertGeoJSONtoPoint(nodeGeometry)
 		newNode.StreetFromParentNode.Path = ConvertGeoJSONtoPath(pathGeometry)

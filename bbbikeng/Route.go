@@ -38,13 +38,11 @@ func (this *Route) constructRoute(finalNode Node) {
 	parentNode = &finalNode
 	// gather all nodes
 	for parentNode != nil {
+		this.nodes = append(this.nodes, parentNode)
+		parentNode = parentNode.ParentNodes
 		if parentNode.TrafficLight {
 			this.TrafficLights++
 		}
-		this.nodes = append(this.nodes, parentNode)
-		parentNode = parentNode.ParentNodes
-
-
 	}
 	// reverse list
 	var tmpNodeList []*Node

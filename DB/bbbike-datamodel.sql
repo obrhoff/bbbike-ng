@@ -20,6 +20,16 @@ DROP TABLE IF EXISTS node;
 SELECT topology.DropTopology('path_topo');
 SELECT topology.DropTopology('place_topo');
 
+CREATE OR REPLACE  TYPE attribute AS (category text, type text, geometry geometry);
+
+CREATE OR REPLACE  FUNCTION attributeToJson(attribute) RETURNS json AS $$
+	select row_to_json(json) from (select $1.category, $1.type, st_asgeojson($1.geometry)::json as geometry) as json;
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION attributesToJson(attribute[]) RETURNS json AS $$
+	select array_to_json(array(select attributeToJson(unnest($1)))) as attribute from network where networkid = 23626;
+$$ LANGUAGE SQL;
+
 CREATE TABLE public.path(
 	id bigserial,
 	name name,
@@ -107,11 +117,12 @@ CREATE INDEX node_ways_idx ON node USING gin (networks);
 
 CREATE TABLE public.network(
     id bigserial,
-    type varchar,
-    geometry geometry(linestring, 4326),
-    nodes bigint[],
     name name,
+    type text,
+    nodes bigint[],
     wayid bigint,
+    attributes attribute[]
+    geometry geometry(linestring, 4326),
     CONSTRAINT networkid PRIMARY KEY (id)
 );
 
