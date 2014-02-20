@@ -101,22 +101,7 @@ func ConvertPathToGeoJSON(path []Point)(jsonOutput string) {
 	} else {
 
 		var newJson GeoJSON
-		/*isMultiPolygon := false;
-		for _, point := range path {
-			if (point.Compare(path[0])) {
-				isMultiPolygon = true
-			}
-		} */
-
 		newJson.Type = "LineString"
-
-		/*
-		if isMultiPolygon {
-			newJson.Type = "MultiPolygon"
-		} else {
-			newJson.Type = "LineString"
-		} */
-
 		for _, point := range path {
 			var newCoordinates [2]float64
 			newCoordinates[1] = point.Lat
@@ -156,4 +141,71 @@ func geoJsonInsert(geoJson string) (statement string) {
 
 	return ("ST_TRANSFORM(ST_SetSRID(ST_GeomFromGeoJSON('"+ geoJson + "'), '4326'),4326)")
 
+}
+
+func (this *Path) ParseAttributes(raw string){
+
+	if len(raw) < 1 {
+		return
+	}
+
+	type GenericAttribute struct {
+		Category string
+		Type string
+		Geometry map[string]interface{}
+	}
+
+	var genericAttribute []GenericAttribute
+	err := json.Unmarshal([]byte(raw), &genericAttribute)
+
+	if err == nil {
+
+		for _, entry := range genericAttribute {
+			var newAttribute Attribute
+			newAttribute.Type = entry.Type
+			newAttribute.Category = entry.Category
+			geometryType := entry.Geometry["type"]
+			geometry := entry.Geometry["coordinates"].([]interface {})
+			switch geometryType {
+				case "Point" : {
+					longitude := geometry[0].(float64)
+					latitude := geometry[1].(float64)
+					newAttribute.Geometry = append(newAttribute.Geometry, MakeNewPoint(latitude, longitude))
+				}
+
+				case "LineString": {
+					for _, point := range geometry {
+						convertedInterface := point.([]interface {})
+						longitude := convertedInterface[0].(float64)
+						latitude := convertedInterface[1].(float64)
+						newAttribute.Geometry = append(newAttribute.Geometry,  MakeNewPoint(latitude, longitude))
+					}
+				}
+				case "MultiLineString": {
+					interfaceLenght := len(geometry)-1
+					for i := 0; i <= interfaceLenght; i++ {
+						convertedInnerPoint := geometry[i].([]interface {})
+						if i == 0 {
+							for _, point := range convertedInnerPoint {
+								convertedInterface := point.([]interface {})
+								longitude := convertedInterface[0].(float64)
+								latitude := convertedInterface[1].(float64)
+								newAttribute.Geometry = append(newAttribute.Geometry,  MakeNewPoint(latitude, longitude))
+							}
+						} else {
+							convertedInterface := convertedInnerPoint[1].([]interface {})
+							longitude := convertedInterface[0].(float64)
+							latitude := convertedInterface[1].(float64)
+							newAttribute.Geometry = append(newAttribute.Geometry,  MakeNewPoint(latitude, longitude))
+						}
+					}
+				}
+			}
+			this.Attributes = append(this.Attributes, newAttribute)
+		}
+	} else {
+		log.Fatal("Error while unmarshaling Attributes:", err)
+	}
+
+	log.Println("Path Attributes:", this.Attributes)
 }

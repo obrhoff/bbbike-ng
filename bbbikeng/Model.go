@@ -18,27 +18,22 @@ type Node struct {
 
 	TrafficLight bool
 	Value interface{}
-
 }
 
-
 type Path struct{
-
 	ID int
 	WayID int
 	Name string
 	Type string
 	PathIndex int
 	Path []Point
-	Attributes attributes
-
+	Attributes []Attribute
 }
 
-type attributes struct {
-	Quality string
-	Cyclepath string
-	Greenway string
-	unlit string
+type Attribute struct {
+	Category string
+	Type string
+	Geometry []Point
 }
 
 type base struct {

@@ -40,9 +40,6 @@ func (this *Route) constructRoute(finalNode Node) {
 	for parentNode != nil {
 		this.nodes = append(this.nodes, parentNode)
 		parentNode = parentNode.ParentNodes
-		if parentNode.TrafficLight {
-			this.TrafficLights++
-		}
 	}
 	// reverse list
 	var tmpNodeList []*Node
@@ -136,7 +133,7 @@ func (this *Route) GetAStarRoute() (){
 		}
 
 		currentNode := bestNode
-		log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng)
+		log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name,", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
 		if currentNode.NodeID == this.endNode.NodeID {
 			this.constructRoute(currentNode)
 			return
@@ -207,7 +204,7 @@ func (this *Route) GetBBJson() (json BBJSON) {
 		newInstruction.Name = path.Name
 		newInstruction.Index = path.PathIndex
 		newInstruction.Type = path.Type
-		newInstruction.Quality = path.Attributes.Quality
+//		newInstruction.Quality = path.Attributes.Quality
 		json.Instruction = append(json.Instruction, newInstruction)
 	}
 

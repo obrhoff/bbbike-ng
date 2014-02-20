@@ -243,7 +243,7 @@ func FindNearestNode(point Point) (closestNode Node){
 
 func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 
-	rows, err := Connection.Query("SELECT neighbor.id, networkid, wayid, type, hstore_to_json(attributes), name, st_asgeojson(neighbor.node_geo) as nodecoord, st_asgeojson(geometry) as path, neighbor.walkable, neighbor.trafficlight FROM network, ( SELECT parent, id, geometry as node_geo, walkable, trafficlight FROM node JOIN (select id as parent, unnest(neighbors) as id from node where id = $1) x USING (id)) as neighbor WHERE network.nodes @> ARRAY[neighbor.parent,neighbor.id]", node.NodeID)
+	rows, err := Connection.Query("SELECT neighbor.id, networkid, wayid, type, attributesToJson(attributes), name, st_asgeojson(neighbor.node_geo) as nodecoord, st_asgeojson(geometry) as path, neighbor.walkable, neighbor.trafficlight FROM network, ( SELECT parent, id, geometry as node_geo, walkable, trafficlight FROM node JOIN (select id as parent, unnest(neighbors) as id from node where id = $1) x USING (id)) as neighbor WHERE network.nodes @> ARRAY[neighbor.parent,neighbor.id]", node.NodeID)
 	if err != nil {
 		log.Fatal("Error fetching Neighbor Nodes:", err)
 	}
@@ -260,13 +260,9 @@ func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 		if err != nil {
 			log.Fatal("Error Neighbor Nodes:", err)
 		}
-		//json.Unmarshal([]byte(attributes), &newNode.StreetFromParentNode.Attributes)
-
-		attributes = strings.Replace(attributes, "\\", "", -1)
-		log.Println("Attributes:", attributes)
-
 		newNode.NodeGeometry = ConvertGeoJSONtoPoint(nodeGeometry)
 		newNode.StreetFromParentNode.Path = ConvertGeoJSONtoPath(pathGeometry)
+		newNode.StreetFromParentNode.ParseAttributes(attributes)
 		nodes = append(nodes, newNode)
 	}
 
