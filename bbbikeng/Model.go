@@ -27,19 +27,72 @@ type Path struct{
 	Type string
 	PathIndex int
 	Path []Point
-	Attributes []Attribute
+	Attributes []AttributeInterface
 }
 
 type AttributeInterface interface {
-	CalculateScore (preference *Preferences) (score float64)
+
+	Type() string
+	SetType(Type string)
+
+	Geometry() []Point
+	SetGeometry(geometry []Point)
+
+	Relevance() bool
+	SetRelevance(relevance bool)
+
+	CalculateScore (preference *Preferences) float64
 }
 
 type Attribute struct {
-	Category string
-	Type string
-	Geometry []Point
-	isValid bool
+	attributeType string
+	geometry []Point
+	isRelevant bool
+	AttributeInterface
+}
 
+type CyclepathAttribute struct {
+	Attribute
+}
+
+type GreenwayAttribute struct {
+	Attribute
+}
+
+type QualityAttribute struct {
+	Attribute
+}
+
+type UnlitAttribute struct {
+	Attribute
+}
+
+type TrafficLightAttribute struct {
+	Attribute
+}
+
+func (this *Attribute) Type() (Type string) {
+	return this.attributeType
+}
+
+func (this *Attribute) Geometry() (geometry []Point) {
+	return this.geometry
+}
+
+func (this *Attribute) Relevance() (relevance bool) {
+	return this.isRelevant
+}
+
+func (this *Attribute) SetType(newType string)  () {
+	this.attributeType = newType
+}
+
+func (this *Attribute) SetGeometry(newGeometry []Point)() {
+	this.geometry = newGeometry
+}
+
+func (this *Attribute) SetRelevance(relevance bool)() {
+	this.isRelevant = relevance
 }
 
 type base struct {

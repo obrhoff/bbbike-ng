@@ -161,17 +161,32 @@ func (this *Path) ParseAttributes(raw string){
 	if err == nil {
 
 		for _, entry := range genericAttribute {
-			var newAttribute Attribute
-			newAttribute.Type = entry.Type
-			newAttribute.Category = entry.Category
+
 			geometryType := entry.Geometry["type"]
 			geometry := entry.Geometry["coordinates"].([]interface {})
+
+			var newAttribute AttributeInterface
+			switch entry.Category {
+			case "cyclepath":
+				newAttribute = new(CyclepathAttribute)
+			case "greenway":
+				newAttribute = new(GreenwayAttribute)
+			case "quality":
+				newAttribute = new(QualityAttribute)
+			case "unlit":
+				newAttribute = new(UnlitAttribute)
+			case "trafficlight":
+				newAttribute = new(TrafficLightAttribute)
+			}
+
+			newAttribute.SetType(entry.Type)
+			var tempGeomery []Point
 
 			switch geometryType {
 				case "Point" : {
 					longitude := geometry[0].(float64)
 					latitude := geometry[1].(float64)
-					newAttribute.Geometry = append(newAttribute.Geometry, MakeNewPoint(latitude, longitude))
+					tempGeomery= append(tempGeomery, MakeNewPoint(latitude, longitude))
 				}
 
 				case "LineString": {
@@ -179,7 +194,7 @@ func (this *Path) ParseAttributes(raw string){
 						convertedInterface := point.([]interface {})
 						longitude := convertedInterface[0].(float64)
 						latitude := convertedInterface[1].(float64)
-						newAttribute.Geometry = append(newAttribute.Geometry,  MakeNewPoint(latitude, longitude))
+						tempGeomery = append(tempGeomery,  MakeNewPoint(latitude, longitude))
 					}
 				}
 				case "MultiLineString": {
@@ -191,17 +206,19 @@ func (this *Path) ParseAttributes(raw string){
 								convertedInterface := point.([]interface {})
 								longitude := convertedInterface[0].(float64)
 								latitude := convertedInterface[1].(float64)
-								newAttribute.Geometry = append(newAttribute.Geometry,  MakeNewPoint(latitude, longitude))
+								tempGeomery = append(tempGeomery, MakeNewPoint(latitude, longitude))
 							}
 						} else {
 							convertedInterface := convertedInnerPoint[1].([]interface {})
 							longitude := convertedInterface[0].(float64)
 							latitude := convertedInterface[1].(float64)
-							newAttribute.Geometry = append(newAttribute.Geometry,  MakeNewPoint(latitude, longitude))
+							tempGeomery = append(tempGeomery, MakeNewPoint(latitude, longitude))
 						}
 					}
 				}
 			}
+
+			newAttribute.SetGeometry(tempGeomery)
 			this.Attributes = append(this.Attributes, newAttribute)
 		}
 	} else {

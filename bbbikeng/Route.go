@@ -2,6 +2,7 @@ package bbbikeng
 
 import (
 	"log"
+	"reflect"
 )
 
 type Route struct {
@@ -91,19 +92,19 @@ func (this *Route) constructRoute(finalNode Node) {
 
 }
 
-
-
 func(this *Path) FilterRelevantAttributes(parentNode Node)() {
 
-	var relevantAttributes []Attribute
+	var relevantAttributes []AttributeInterface
 	for _, attribute := range this.Attributes {
 
+		attributeGeometry := attribute.Geometry()
 		isRelevant := false
-		if attribute.Geometry[0].Compare(parentNode.NodeGeometry){
+		if attributeGeometry[0].Compare(parentNode.NodeGeometry){
 			isRelevant = true
 		} else {
 
-		 	if len(attribute.Geometry) == 1 ||  (attribute.Category != "quality" && attribute.Category != "cyclepath"){
+			category := reflect.TypeOf(attribute).Elem().Name()
+			if len(attributeGeometry) == 1 ||  (category != "QualityAttribute" && category != "CyclepathAttribute"){
 				isRelevant = true
 			} else {
 				isFlippedDirection := false
@@ -115,7 +116,7 @@ func(this *Path) FilterRelevantAttributes(parentNode Node)() {
 				var startIndex int
 				for i := 0; i <= len(this.Path); i++ {
 					pathPoint := this.Path[i]
-					if attribute.Geometry[0].Compare(pathPoint) {
+					if attributeGeometry[0].Compare(pathPoint) {
 						startIndex = i
 						break
 					}
@@ -123,13 +124,13 @@ func(this *Path) FilterRelevantAttributes(parentNode Node)() {
 				// determine if attribute follows path. If not it is not relevant
 				if !isFlippedDirection {
 					if len(this.Path)-1 > startIndex {
-						if this.Path[startIndex+1].Compare(attribute.Geometry[1]) {
+						if this.Path[startIndex+1].Compare(attributeGeometry[1]) {
 							isRelevant = true
 						}
 					}
 				} else {
 					if 0 < startIndex {
-						if this.Path[startIndex-1].Compare(attribute.Geometry[1]) {
+						if this.Path[startIndex-1].Compare(attributeGeometry[1]) {
 							isRelevant = true
 						}
 					}
@@ -138,7 +139,7 @@ func(this *Path) FilterRelevantAttributes(parentNode Node)() {
 
 		}
 
-		attribute.isValid = isRelevant
+		attribute.SetRelevance(isRelevant)
 		relevantAttributes = append(relevantAttributes, attribute)
 	}
 

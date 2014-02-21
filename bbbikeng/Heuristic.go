@@ -1,59 +1,63 @@
 package bbbikeng
 
+import (
+	"log"
+)
+
 func (this *Route) CalculateHeuristic(parentNode Node, neighborNode Node) (heuristic float64) {
 
-	distanceToEnd := DistanceFromPointToPoint(neighborNode.NodeGeometry, this.endNode.NodeGeometry)
+	heuristic = DistanceFromPointToPoint(neighborNode.NodeGeometry, this.endNode.NodeGeometry)
+
+	log.Println("Calculating score for:", neighborNode)
+
 	for _, attribute := range neighborNode.StreetFromParentNode.Attributes {
 
-		if !attribute.isValid {
+		if !attribute.Relevance() {
 			continue
 		}
 
-		switch attribute.Category {
+		log.Println("Calculating Attributescore for:", attribute)
+		heuristic += attribute.CalculateScore(&this.Preferences)
 
-			case "greenway": {
-
-			}
-
-			case "cyclepath": {
-
-			}
-
-			case "quality": {
-
-			}
-
-			case "unlit": {
-
-			}
-
-			case "trafficlight": {
-
-			}
-
-		}
 
 	}
 
-	return distanceToEnd
+	return heuristic
 
 }
 
-/*
-func (this *Attribute) scoreForCyclepath (preferences *Preferences) (score float64) {
+func (this *CyclepathAttribute) CalculateScore (preference *Preferences) (score float64) {
 
+	log.Println("Cyclepath Score:")
+
+	return score
 }
 
-func scoreForQuality (qualityPreference string, qualityAttribute Attribute) (score float64) {
+func (this *GreenwayAttribute) CalculateScore (preference *Preferences) (score float64) {
 
+	log.Println("Greenway Score:")
+
+
+	return score
 }
+func (this *QualityAttribute) CalculateScore (preference *Preferences) (score float64) {
+
+	log.Println("Unlit Score:")
 
 
-func scoreForGreenway (greenwayPreference string, greenwayAttribute Attribute) (score float64) {
-
+	return score
 }
+func (this *UnlitAttribute) CalculateScore (preference *Preferences) (score float64) {
 
-func scoreForTrafficLight (avoidTrafficLight bool, trafficLights int) (score float64) {
+	log.Println("Unlit Score:")
 
-}*/
 
+	return score
+}
+func (this *TrafficLightAttribute) CalculateScore (preference *Preferences) (score float64) {
+
+	log.Println("TrafficLight Score:")
+
+
+	return score
+}
