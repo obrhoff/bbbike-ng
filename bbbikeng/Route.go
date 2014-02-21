@@ -91,11 +91,58 @@ func (this *Route) constructRoute(finalNode Node) {
 
 }
 
-func (this *Route) CalculateHeuristic(parentNode Node, neighborNode Node) (heuristic float64) {
 
-	distanceToEnd := DistanceFromPointToPoint(neighborNode.NodeGeometry, this.endNode.NodeGeometry)
-	//pathDistance := DistanceFromLinePoint(neighborNode.StreetFromParentNode.Path)
-	return distanceToEnd
+
+func(this *Path) FilterRelevantAttributes(parentNode Node)() {
+
+	var relevantAttributes []Attribute
+	for _, attribute := range this.Attributes {
+
+		isRelevant := false
+		if attribute.Geometry[0].Compare(parentNode.NodeGeometry){
+			isRelevant = true
+		} else {
+
+		 	if len(attribute.Geometry) == 1 ||  (attribute.Category != "quality" && attribute.Category != "cyclepath"){
+				isRelevant = true
+			} else {
+				isFlippedDirection := false
+				// determine if we start from above or the buttom of the street
+				if this.Path[len(this.Path)-1].Compare(parentNode.NodeGeometry) {
+					isFlippedDirection = true
+				}
+				// determine where we match our attribute with the street section
+				var startIndex int
+				for i := 0; i <= len(this.Path); i++ {
+					pathPoint := this.Path[i]
+					if attribute.Geometry[0].Compare(pathPoint) {
+						startIndex = i
+						break
+					}
+				}
+				// determine if attribute follows path. If not it is not relevant
+				if !isFlippedDirection {
+					if len(this.Path)-1 > startIndex {
+						if this.Path[startIndex+1].Compare(attribute.Geometry[1]) {
+							isRelevant = true
+						}
+					}
+				} else {
+					if 0 < startIndex {
+						if this.Path[startIndex-1].Compare(attribute.Geometry[1]) {
+							isRelevant = true
+						}
+					}
+				}
+			}
+
+		}
+
+		attribute.isValid = isRelevant
+		relevantAttributes = append(relevantAttributes, attribute)
+	}
+
+	this.Attributes = relevantAttributes
 
 }
 
@@ -133,7 +180,7 @@ func (this *Route) GetAStarRoute() (){
 		}
 
 		currentNode := bestNode
-		log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name,", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
+		log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name, currentNode.StreetFromParentNode.Path, ", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
 		if currentNode.NodeID == this.endNode.NodeID {
 			this.constructRoute(currentNode)
 			return
@@ -155,6 +202,7 @@ func (this *Route) GetAStarRoute() (){
 
 			if !openList.ContainsByKey(neighbor.NodeID) {
 				gScoreIsBest = true;
+				neighbor.StreetFromParentNode.FilterRelevantAttributes(currentNode)
 				neighbor.Heuristic = this.CalculateHeuristic(currentNode, neighbor)
 				openList.Add(neighbor)
 			}

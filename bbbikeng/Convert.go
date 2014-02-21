@@ -166,6 +166,7 @@ func (this *Path) ParseAttributes(raw string){
 			newAttribute.Category = entry.Category
 			geometryType := entry.Geometry["type"]
 			geometry := entry.Geometry["coordinates"].([]interface {})
+
 			switch geometryType {
 				case "Point" : {
 					longitude := geometry[0].(float64)
@@ -207,5 +208,4 @@ func (this *Path) ParseAttributes(raw string){
 		log.Fatal("Error while unmarshaling Attributes:", err)
 	}
 
-	log.Println("Path Attributes:", this.Attributes)
 }

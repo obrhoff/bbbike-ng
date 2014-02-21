@@ -30,10 +30,16 @@ type Path struct{
 	Attributes []Attribute
 }
 
+type AttributeInterface interface {
+	CalculateScore (preference *Preferences) (score float64)
+}
+
 type Attribute struct {
 	Category string
 	Type string
 	Geometry []Point
+	isValid bool
+
 }
 
 type base struct {
