@@ -7,30 +7,77 @@ import (
 func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node) (heuristic float64) {
 
 	heuristic = DistanceFromPointToPoint(neighborNode.NodeGeometry, this.endNode.NodeGeometry)
-	neighborNode.StreetFromParentNode.Attributes = GetRelevantAttributes(parentNode, neighborNode)
-	for _, attribute := range neighborNode.StreetFromParentNode.Attributes {
-		heuristic += attribute.CalculateScore(&this.Preferences)
+	totalDistance := DistanceFromLinePoint(neighborNode.StreetFromParentNode.Path)
+	sortedAttributes, attributesPerIndex, distancePerIndex := GetRelevantAttributes(parentNode, neighborNode)
+	neighborNode.StreetFromParentNode.Attributes = sortedAttributes
+
+	for key, attributeSegments := range attributesPerIndex {
+
+		distanceFromSegment := distancePerIndex[key]
+		weightOfTotal := (distanceFromSegment / totalDistance)
+		segmentScore := 0.0
+		for _, attribute := range attributeSegments{
+			attr := *attribute
+			segmentScore += attr.CalculateScore(&this.Preferences)
+		}
+
+		log.Println("Total weightOfTotal", weightOfTotal)
 
 
 	}
+	log.Println("Total Distance", totalDistance)
+	log.Println("Attributes:", attributesPerIndex)
+	log.Println("Distance Per Index:", distancePerIndex)
 
 	return
 
 
 }
 
-func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttributes []AttributeInterface){
+func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttributes []AttributeInterface, attributesPerIndex map[int][]*AttributeInterface, distancePerIndex map[int]float64){
 
 	flipped := !parentNode.NodeGeometry.Compare(neighborNode.StreetFromParentNode.Path[0])
 	if flipped {
-		relevantAttributes = neighborNode.StreetFromParentNode.NormalAttribute
-	} else {
 		relevantAttributes = neighborNode.StreetFromParentNode.FlippedAttribute
+	} else {
+		relevantAttributes = neighborNode.StreetFromParentNode.NormalAttribute
 	}
 	for _, globalAttribute := range neighborNode.StreetFromParentNode.GlobalAttribute {
 		relevantAttributes = append(relevantAttributes, globalAttribute)
 	}
-	return relevantAttributes
+
+	attributesPerIndex = make(map[int][]*AttributeInterface)
+	distancePerIndex = make(map[int]float64)
+
+	for i := 0; i < len(neighborNode.StreetFromParentNode.Path)-1; i++ {
+		if i+1 <= len(neighborNode.StreetFromParentNode.Path)-1 {
+			firstPoint := neighborNode.StreetFromParentNode.Path[i]
+			secondPoint := neighborNode.StreetFromParentNode.Path[i+1]
+			distancePerIndex[i] = DistanceFromPointToPoint(firstPoint, secondPoint)
+		}
+	}
+
+	for _, attribute := range relevantAttributes {
+		attributeGeometry := attribute.Geometry()
+		firstGeometry := attributeGeometry[0]
+		lastGeometry := attributeGeometry[len(attributeGeometry)-1]
+		firstIndex := -1
+		lastIndex := -1
+		for pathIndex, pathSegment := range neighborNode.StreetFromParentNode.Path {
+			if pathSegment.Compare(firstGeometry) {
+				firstIndex = pathIndex
+			} else if (pathSegment.Compare(lastGeometry)){
+				lastIndex = pathIndex
+			}
+		}
+		if lastIndex >= 0 && firstIndex >= 0 {
+			for pathIndex := firstIndex; pathIndex < lastIndex; pathIndex++ {
+				attributesPerIndex[pathIndex] = append(attributesPerIndex[pathIndex], &attribute)
+			}
+		}
+	}
+
+	return relevantAttributes, attributesPerIndex, distancePerIndex
 
 }
 

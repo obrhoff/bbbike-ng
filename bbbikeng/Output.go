@@ -8,7 +8,6 @@ type BBJSON struct {
 	Time int
 	Lights int
 	Instruction []BBJSONInstruction
-	Attributes []BBJSONAttribute
 	Path [][2]float64
 
 }
@@ -53,13 +52,6 @@ func (this *Route) GetBBJson() (json BBJSON) {
 		newInstruction.Index = path.PathIndex
 		newInstruction.Type = path.Type
 		json.Instruction = append(json.Instruction, newInstruction)
-	}
-
-	for _, attribute := range this.Attributes {
-		var attr BBJSONAttribute
-		attr.Type = attribute.Type()
-		attr.Path = attribute.Geometry()
-		json.Attributes = append(json.Attributes, attr)
 	}
 
 	json.Preferences = this.Preferences

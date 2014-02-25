@@ -191,7 +191,7 @@ func (this *Attribute) SetPathFromGeoJSON(jsonInput interface {}) () {
 	assertedMap := jsonInput.(map[string]interface{})
 	geometryType := assertedMap["type"]
 
-	if geometryType != "LineString" || geometryType != "Point" || geometryType != "MultiLineString" {
+	if geometryType != "LineString" && geometryType != "Point" && geometryType != "MultiLineString" {
 		return
 	}
 
