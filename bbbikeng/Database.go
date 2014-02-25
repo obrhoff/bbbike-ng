@@ -247,9 +247,9 @@ func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 		}
 		newNode.NodeGeometry = ConvertGeoJSONtoPoint(nodeGeometry)
 		newNode.StreetFromParentNode.Path = ConvertGeoJSONtoPath(pathGeometry)
-	//	newNode.StreetFromParentNode.GlobalAttribute = ParseAttributes(globalAttributes)
+		newNode.StreetFromParentNode.GlobalAttribute = ParseAttributes(globalAttributes)
 		newNode.StreetFromParentNode.NormalAttribute = ParseAttributes(normalAttributes)
-	//–	newNode.StreetFromParentNode.FlippedAttribute = ParseAttributes(flippedAttributes)
+		newNode.StreetFromParentNode.FlippedAttribute = ParseAttributes(flippedAttributes)
 
 		nodes = append(nodes, newNode)
 	}

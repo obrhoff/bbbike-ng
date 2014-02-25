@@ -124,6 +124,8 @@ func ConvertStringToIntArray(stringList string) (list []int) {
 	stringList = strings.Replace(stringList, "}", "", -1)
 	stringList = strings.Replace(stringList, "NULL", "", -1)
 	streetsSplitted := strings.Split(stringList, ",")
+
+
 	for _, string := range streetsSplitted {
 		converted, err := strconv.Atoi(string)
 		if err == nil {
@@ -143,51 +145,37 @@ func geoJsonInsert(geoJson string) (statement string) {
 
 func ParseAttributes(raw string) (attributes []AttributeInterface){
 
-	if len(raw) < 1 {
-		return
-	}
-
-	type GenericAttribute struct {
-		Category string
-		Type string
-		Geometry map[string]interface{}
-	}
-
-	var genericAttribute []GenericAttribute
+	var genericAttribute []map[string]interface{}
 	err := json.Unmarshal([]byte(raw), &genericAttribute)
 
-	if err == nil {
-		for _, entry := range genericAttribute {
-				// there is some weired bug here
-				if entry.Type == "HA" {
-					continue
-				}
-				var newAttribute AttributeInterface
-				switch entry.Category {
-					case "CA":
-						newAttribute = new(CyclepathAttribute)
-					case "GA":
-						newAttribute = new(GreenwayAttribute)
-					case "QA":
-						newAttribute = new(QualityAttribute)
-					case "LA":
-						newAttribute = new(UnlitAttribute)
-					case "TA":
-						newAttribute = new(TrafficLightAttribute)
-					case "HA":
-						newAttribute = new(HandicapAttribute)
-				}
-				newAttribute.SetType(entry.Type)
-				newAttribute.SetPathFromGeoJSON(entry.Geometry)
-			}
-			attributes = append(attributes, newAttribute)
-		}
-	} else {
+	if err != nil {
 		log.Fatal("Error while unmarshaling Attributes:", err)
+		return nil
+	}
+
+	for _, entry := range genericAttribute {
+
+		var newAttribute AttributeInterface
+		switch entry["category"] {
+				case "CA":
+					newAttribute = new(CyclepathAttribute)
+				case "GA":
+					newAttribute = new(GreenwayAttribute)
+				case "QA":
+					newAttribute = new(QualityAttribute)
+				case "LA":
+					newAttribute = new(UnlitAttribute)
+				case "TA":
+					newAttribute = new(TrafficLightAttribute)
+				case "HA":
+					newAttribute = new(HandicapAttribute)
+		}
+		newAttribute.SetType(entry["type"].(string))
+		newAttribute.SetPathFromGeoJSON(entry["geometry"])
+		attributes = append(attributes, newAttribute)
+
 	}
 	return attributes
-
-	
 }
 
 func (this *Attribute) SetPathFormGeoJSONString(rawjson string) () {
@@ -200,12 +188,14 @@ func (this *Attribute) SetPathFormGeoJSONString(rawjson string) () {
 
 func (this *Attribute) SetPathFromGeoJSON(jsonInput interface {}) () {
 
-	log.Println("jsonInput", jsonInput)
-
 	assertedMap := jsonInput.(map[string]interface{})
 	geometryType := assertedMap["type"]
-	geometryData := assertedMap["coordinates"].([]interface {})
 
+	if geometryType != "LineString" || geometryType != "Point" || geometryType != "MultiLineString" {
+		return
+	}
+
+	geometryData := assertedMap["coordinates"].([]interface {})
 	switch geometryType {
 		case "Point" : {
 			longitude := geometryData[0].(float64)
@@ -242,7 +232,6 @@ func (this *Attribute) SetPathFromGeoJSON(jsonInput interface {}) () {
 		}
 	}
 
-	log.Println("jsonoutput", this)
 }
 
 func (this *Attribute) GetGeoJSON() (jsonOutput string) {

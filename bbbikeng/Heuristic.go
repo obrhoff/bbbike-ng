@@ -8,10 +8,7 @@ func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node) (heu
 
 	heuristic = DistanceFromPointToPoint(neighborNode.NodeGeometry, this.endNode.NodeGeometry)
 	neighborNode.StreetFromParentNode.Attributes = GetRelevantAttributes(parentNode, neighborNode)
-	log.Println("Calculating score for:", neighborNode.StreetFromParentNode.Attributes)
 	for _, attribute := range neighborNode.StreetFromParentNode.Attributes {
-
-		log.Println("Calculating Attributescore for:", attribute)
 		heuristic += attribute.CalculateScore(&this.Preferences)
 
 
