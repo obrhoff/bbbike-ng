@@ -39,30 +39,29 @@ WHERE subquery.id = node.id;
 UPDATE node SET walkable = true WHERE array_length(neighbors, 1) > 1;
 UPDATE node SET walkable = false WHERE array_length(neighbors, 1) < 2;
 
-UPDATE network SET forward = array_cat(forward, attribute.array) from
+UPDATE network SET normal = array_cat(normal, attribute.array) from
 (select info.networkid, array_agg(('CA', info.type, st_linemerge(info.relevantGeometry))::attribute) as array from
 (select path.networkid, path.geometry as pathgeometry, cyclepath.type as type, st_intersection(cyclepath.geometry, path.geometry) as relevantGeometry, st_intersection(path.geometry, cyclepath.geometry) as matchedGeometry from network as path, cyclepath where st_intersects(cyclepath.geometry, path.geometry) and not geometryType(st_intersection(path.geometry, cyclepath.geometry)) = 'POINT') as info where ST_OrderingEquals(info.relevantGeometry, info.matchedGeometry) group by info.networkid ) as attribute where attribute.networkid = network.networkid;
 
-UPDATE network SET backward = array_cat(backward, attribute.array) from
+UPDATE network SET reversed = array_cat(reversed, attribute.array) from
 (select info.networkid, array_agg(('CA', info.type, st_linemerge(info.relevantGeometry))::attribute) as array from
 (select path.networkid, path.geometry as pathgeometry, cyclepath.type as type, st_intersection(cyclepath.geometry, path.geometry) as relevantGeometry, st_intersection(path.geometry, cyclepath.geometry) as matchedGeometry from network as path, cyclepath where st_intersects(cyclepath.geometry, path.geometry) and not geometryType(st_intersection(path.geometry, cyclepath.geometry)) = 'POINT') as info where not ST_OrderingEquals(info.relevantGeometry, info.matchedGeometry) group by info.networkid ) as attribute where attribute.networkid = network.networkid;
 
-UPDATE network SET forward = array_cat(forward, attribute.array) from
+UPDATE network SET normal = array_cat(normal, attribute.array) from
 (select info.networkid, array_agg(('QA', info.type, st_linemerge(info.relevantGeometry))::attribute) as array from
 (select path.networkid, path.geometry as pathgeometry, quality.type as type, st_intersection(quality.geometry, path.geometry) as relevantGeometry, st_intersection(path.geometry, quality.geometry) as matchedGeometry from network as path, quality where st_intersects(quality.geometry, path.geometry) and not geometryType(st_intersection(path.geometry, quality.geometry)) = 'POINT') as info where ST_OrderingEquals(info.relevantGeometry, info.matchedGeometry) group by info.networkid ) as attribute where attribute.networkid = network.networkid;
 
-UPDATE network SET backward = array_cat(backward, attribute.array) from
+UPDATE network SET reversed = array_cat(reversed, attribute.array) from
 (select info.networkid, array_agg(('QA', info.type, st_linemerge(info.relevantGeometry))::attribute) as array from
 (select path.networkid, path.geometry as pathgeometry, quality.type as type, st_intersection(quality.geometry, path.geometry) as relevantGeometry, st_intersection(path.geometry, quality.geometry) as matchedGeometry from network as path, quality where st_intersects(quality.geometry, path.geometry) and not geometryType(st_intersection(path.geometry, quality.geometry)) = 'POINT') as info where not ST_OrderingEquals(info.relevantGeometry, info.matchedGeometry) group by info.networkid ) as attribute where attribute.networkid = network.networkid;
 
-UPDATE network SET forward = array_cat(forward, attribute.array) from
+UPDATE network SET normal = array_cat(normal, attribute.array) from
 (select info.networkid, array_agg(('LA', 'NL', st_linemerge(info.relevantGeometry))::attribute) as array from
 (select path.networkid, path.geometry as pathgeometry, st_intersection(unlitpath.geometry, path.geometry) as relevantGeometry, st_intersection(path.geometry, unlitpath.geometry) as matchedGeometry from network as path, unlitpath where st_intersects(unlitpath.geometry, path.geometry) and not geometryType(st_intersection(path.geometry, unlitpath.geometry)) = 'POINT') as info where ST_OrderingEquals(info.relevantGeometry, info.matchedGeometry) group by info.networkid ) as attribute where attribute.networkid = network.networkid;
 
-UPDATE network SET backward = array_cat(backward, attribute.array) from
+UPDATE network SET reversed = array_cat(reversed, attribute.array) from
 (select info.networkid, array_agg(('LA', 'NL', st_linemerge(info.relevantGeometry))::attribute) as array from
 (select path.networkid, path.geometry as pathgeometry, st_intersection(unlitpath.geometry, path.geometry) as relevantGeometry, st_intersection(path.geometry, unlitpath.geometry) as matchedGeometry from network as path, unlitpath where st_intersects(unlitpath.geometry, path.geometry) and not geometryType(st_intersection(path.geometry, unlitpath.geometry)) = 'POINT') as info where not ST_OrderingEquals(info.relevantGeometry, info.matchedGeometry) group by info.networkid ) as attribute where attribute.networkid = network.networkid;
 
-UPDATE network SET global = array_cat(global, attribute.array) from (select info.networkid, array_agg(('GA', info.type, st_linemerge(info.geometry))::attribute) as array from (select path.networkid, greenpath.type as type, st_intersection(greenpath.geometry, path.geometry) as geometry from network as path, greenpath where st_intersects(greenpath.geometry, path.geometry) and not geometryType(st_intersection(path.geometry, greenpath.geometry)) = 'POINT') as info group by info.networkid) as attribute where attribute.networkid = network.networkid;
-
-UPDATE network SET global = array_cat(global, attribute.array) from (select info.networkid, array_agg(('TA', info.type, info.geometry)::attribute) as array from (select path.networkid, trafficlight.type as type, st_intersection(trafficlight.geometry, path.geometry) as geometry from network as path, trafficlight where st_intersects(trafficlight.geometry, path.geometry) and not trafficlight.type = 'X')  as info group by info.networkid) as attribute where attribute.networkid = network.networkid;
+UPDATE network SET defaults = array_cat(defaults, attribute.array) from (select info.networkid, array_agg(('GA', info.type, st_linemerge(info.geometry))::attribute) as array from (select path.networkid, greenpath.type as type, st_intersection(greenpath.geometry, path.geometry) as geometry from network as path, greenpath where st_intersects(greenpath.geometry, path.geometry) and not geometryType(st_intersection(path.geometry, greenpath.geometry)) = 'POINT') as info group by info.networkid) as attribute where attribute.networkid = network.networkid;
+UPDATE network SET defaults = array_cat(defaults, attribute.array) from (select info.networkid, array_agg(('TA', info.type, info.geometry)::attribute) as array from (select path.networkid, trafficlight.type as type, st_intersection(trafficlight.geometry, path.geometry) as geometry from network as path, trafficlight where st_intersects(trafficlight.geometry, path.geometry) and not trafficlight.type = 'X')  as info group by info.networkid) as attribute where attribute.networkid = network.networkid;

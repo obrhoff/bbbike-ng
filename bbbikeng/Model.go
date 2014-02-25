@@ -1,4 +1,7 @@
 package bbbikeng
+import (
+	"strings"
+)
 
 type Node struct {
 
@@ -27,10 +30,21 @@ type Path struct{
 	Type string
 	PathIndex int
 	Path []Point
+
+	GlobalAttribute []AttributeInterface
+	NormalAttribute []AttributeInterface
+	FlippedAttribute []AttributeInterface
+
 	Attributes []AttributeInterface
 }
 
 type AttributeInterface interface {
+
+	Id() int
+	SetId (id int)
+
+	Name() string
+	SetName(Name string)
 
 	Type() string
 	SetType(Type string)
@@ -38,17 +52,22 @@ type AttributeInterface interface {
 	Geometry() []Point
 	SetGeometry(geometry []Point)
 
-	Relevance() bool
-	SetRelevance(relevance bool)
-
 	CalculateScore (preference *Preferences) float64
+	SetPathFromGeoJSON (jsonInput interface {})
+
 }
 
+
 type Attribute struct {
+	id int
 	attributeType string
 	geometry []Point
-	isRelevant bool
 	AttributeInterface
+}
+
+type WayAttribute struct {
+	name string
+	Attribute
 }
 
 type CyclepathAttribute struct {
@@ -71,16 +90,48 @@ type TrafficLightAttribute struct {
 	Attribute
 }
 
+type HandicapAttribute struct {
+	name string
+	Attribute
+}
+
+func (this *WayAttribute) SetName(Name string) () {
+	this.name = strings.Replace(Name, "'", "''", -1)
+}
+
+func (this *WayAttribute) Name() (Name string) {
+	return this.name
+}
+
+func (this *HandicapAttribute) SetName(Name string) () {
+	this.name = strings.Replace(Name, "'", "''", -1)
+}
+
+func (this *HandicapAttribute) Name() (Name string) {
+	return this.name
+}
+
+func (this *Attribute) SetId(id int) {
+	this.id = id
+}
+
+func (this *Attribute) Id() (id int) {
+	return this.id
+}
+
+func (this *Attribute) SetName(Name string) () {
+}
+
+func (this *Attribute) Name() (Name string) {
+	return ""
+}
+
 func (this *Attribute) Type() (Type string) {
 	return this.attributeType
 }
 
 func (this *Attribute) Geometry() (geometry []Point) {
 	return this.geometry
-}
-
-func (this *Attribute) Relevance() (relevance bool) {
-	return this.isRelevant
 }
 
 func (this *Attribute) SetType(newType string)  () {
@@ -91,48 +142,12 @@ func (this *Attribute) SetGeometry(newGeometry []Point)() {
 	this.geometry = newGeometry
 }
 
-func (this *Attribute) SetRelevance(relevance bool)() {
-	this.isRelevant = relevance
+func (this *Attribute) GetJsonGeometry()(geojson GeoJSON) {
+	return geojson
 }
 
-type base struct {
-	ID int
-	Type string
-	Path []Point
+func (this *Attribute) SetFromGeojson(geojson string) () {
+
 }
 
-type City struct {
-	ID int
-	Name string
-	Country string
-	Geometry []Point
-}
 
-type Street struct {
-	Name string
-	Nodes []Node
-	base
-}
-
-type Cyclepath struct {
-	Name string
-	base
-}
-
-type Quality struct {
-	Name string
-	base
-}
-
-type Greenway struct {
-	Name string
-	base
-}
-
-func (f *base) SetPathFromGeoJSON(jsonInput string) {
-	f.Path = ConvertGeoJSONtoPath(jsonInput)
-}
-
-func (f base) GetGeoJSONPath() (jsonOutput string) {
-	return ConvertPathToGeoJSON(f.Path)
-}

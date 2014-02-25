@@ -11,23 +11,23 @@ DROP TABLE IF EXISTS place;
 DROP TABLE IF EXISTS path;
 DROP TABLE IF EXISTS cyclepath;
 DROP TABLE IF EXISTS greenpath;
-
+DROP TABLE IF EXISTS handicap;
 DROP TABLE IF EXISTS quality;
 DROP TABLE IF EXISTS trafficlight;
+DROP TABLE IF EXISTS unlitpath;
 DROP TABLE IF EXISTS network;
 DROP TABLE IF EXISTS node;
 
 SELECT topology.DropTopology('path_topo');
 SELECT topology.DropTopology('place_topo');
 
-CREATE OR REPLACE  TYPE attribute AS (category text, type text, geometry geometry);
-
-CREATE OR REPLACE  FUNCTION attributeToJson(attribute) RETURNS json AS $$
+CREATE OR REPLACE TYPE attribute AS (category text, type text, geometry geometry);
+CREATE OR REPLACE FUNCTION attributeToJson(attribute) RETURNS json AS $$
 	select row_to_json(json) from (select $1.category, $1.type, st_asgeojson($1.geometry)::json as geometry) as json;
 $$ LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION attributesToJson(attribute[]) RETURNS json AS $$
-	select array_to_json(array(select attributeToJson(unnest($1)))) as attribute from network where networkid = 23626;
+	select array_to_json(array(select attributeToJson(unnest($1)))) as attribute;
 $$ LANGUAGE SQL;
 
 CREATE TABLE public.path(
@@ -87,7 +87,7 @@ CREATE INDEX unlitpath_gix ON unlitpath USING GIST (geometry);
 
 CREATE TABLE public.quality(
 	id bigserial,
-	geometry geometry(linestring, 4326),
+	geometry geometry,
 	type varchar,
 	CONSTRAINT qualityid PRIMARY KEY (id)
 );
@@ -101,6 +101,14 @@ CREATE TABLE public.trafficlight(
 );
 CREATE INDEX trafficlight_gix ON trafficlight USING GIST (geometry);
 
+CREATE TABLE public.handicap (
+       id bigserial,
+       description text,
+       type varchar,
+       geometry geometry,
+       CONSTRAINT handicapid PRIMARY KEY (id)
+);
+CREATE INDEX handicap_gix ON handicap USING GIST (geometry);
 
 CREATE TABLE public.node(
 	id bigserial,
@@ -111,22 +119,23 @@ CREATE TABLE public.node(
 	CONSTRAINT nodeid PRIMARY KEY (id)
 );
 
+
 CREATE INDEX node_gix ON node USING GIST (geometry);
 CREATE INDEX nodes_neighbors_idx ON node USING gin (neighbors);
 CREATE INDEX node_ways_idx ON node USING gin (networks);
 
 CREATE TABLE public.network(
-    id bigserial,
+    networkid bigserial,
     name name,
     type text,
     nodes bigint[],
     wayid bigint,
-    attributes attribute[]
+    defaults attribute[],
+    normal attribute[],
+    reversed attribute[],
     geometry geometry(linestring, 4326),
-    CONSTRAINT networkid PRIMARY KEY (id)
+    CONSTRAINT networkid PRIMARY KEY (networkid)
 );
-
-ALTER TABLE network ADD attributes HSTORE NOT NULL DEFAULT '';
 
 CREATE INDEX attributes_idx ON network USING gin(attributes);
 CREATE INDEX network_idx ON network USING GIST (geometry);

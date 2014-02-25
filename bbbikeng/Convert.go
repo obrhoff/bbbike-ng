@@ -124,8 +124,6 @@ func ConvertStringToIntArray(stringList string) (list []int) {
 	stringList = strings.Replace(stringList, "}", "", -1)
 	stringList = strings.Replace(stringList, "NULL", "", -1)
 	streetsSplitted := strings.Split(stringList, ",")
-
-
 	for _, string := range streetsSplitted {
 		converted, err := strconv.Atoi(string)
 		if err == nil {
@@ -143,7 +141,7 @@ func geoJsonInsert(geoJson string) (statement string) {
 
 }
 
-func (this *Path) ParseAttributes(raw string){
+func ParseAttributes(raw string) (attributes []AttributeInterface){
 
 	if len(raw) < 1 {
 		return
@@ -159,70 +157,94 @@ func (this *Path) ParseAttributes(raw string){
 	err := json.Unmarshal([]byte(raw), &genericAttribute)
 
 	if err == nil {
-
 		for _, entry := range genericAttribute {
-
-			geometryType := entry.Geometry["type"]
-			geometry := entry.Geometry["coordinates"].([]interface {})
-
-			var newAttribute AttributeInterface
-			switch entry.Category {
-			case "cyclepath":
-				newAttribute = new(CyclepathAttribute)
-			case "greenway":
-				newAttribute = new(GreenwayAttribute)
-			case "quality":
-				newAttribute = new(QualityAttribute)
-			case "unlit":
-				newAttribute = new(UnlitAttribute)
-			case "trafficlight":
-				newAttribute = new(TrafficLightAttribute)
+				// there is some weired bug here
+				if entry.Type == "HA" {
+					continue
+				}
+				var newAttribute AttributeInterface
+				switch entry.Category {
+					case "CA":
+						newAttribute = new(CyclepathAttribute)
+					case "GA":
+						newAttribute = new(GreenwayAttribute)
+					case "QA":
+						newAttribute = new(QualityAttribute)
+					case "LA":
+						newAttribute = new(UnlitAttribute)
+					case "TA":
+						newAttribute = new(TrafficLightAttribute)
+					case "HA":
+						newAttribute = new(HandicapAttribute)
+				}
+				newAttribute.SetType(entry.Type)
+				newAttribute.SetPathFromGeoJSON(entry.Geometry)
 			}
-
-			newAttribute.SetType(entry.Type)
-			var tempGeomery []Point
-
-			switch geometryType {
-				case "Point" : {
-					longitude := geometry[0].(float64)
-					latitude := geometry[1].(float64)
-					tempGeomery= append(tempGeomery, MakeNewPoint(latitude, longitude))
-				}
-
-				case "LineString": {
-					for _, point := range geometry {
-						convertedInterface := point.([]interface {})
-						longitude := convertedInterface[0].(float64)
-						latitude := convertedInterface[1].(float64)
-						tempGeomery = append(tempGeomery,  MakeNewPoint(latitude, longitude))
-					}
-				}
-				case "MultiLineString": {
-					interfaceLenght := len(geometry)-1
-					for i := 0; i <= interfaceLenght; i++ {
-						convertedInnerPoint := geometry[i].([]interface {})
-						if i == 0 {
-							for _, point := range convertedInnerPoint {
-								convertedInterface := point.([]interface {})
-								longitude := convertedInterface[0].(float64)
-								latitude := convertedInterface[1].(float64)
-								tempGeomery = append(tempGeomery, MakeNewPoint(latitude, longitude))
-							}
-						} else {
-							convertedInterface := convertedInnerPoint[1].([]interface {})
-							longitude := convertedInterface[0].(float64)
-							latitude := convertedInterface[1].(float64)
-							tempGeomery = append(tempGeomery, MakeNewPoint(latitude, longitude))
-						}
-					}
-				}
-			}
-
-			newAttribute.SetGeometry(tempGeomery)
-			this.Attributes = append(this.Attributes, newAttribute)
+			attributes = append(attributes, newAttribute)
 		}
 	} else {
 		log.Fatal("Error while unmarshaling Attributes:", err)
 	}
+	return attributes
 
+	
+}
+
+func (this *Attribute) SetPathFormGeoJSONString(rawjson string) () {
+	var geojsonMap interface {}
+	err := json.Unmarshal([]byte(rawjson), &geojsonMap)
+	if err != nil {
+		this.SetPathFromGeoJSON(geojsonMap)
+	}
+}
+
+func (this *Attribute) SetPathFromGeoJSON(jsonInput interface {}) () {
+
+	log.Println("jsonInput", jsonInput)
+
+	assertedMap := jsonInput.(map[string]interface{})
+	geometryType := assertedMap["type"]
+	geometryData := assertedMap["coordinates"].([]interface {})
+
+	switch geometryType {
+		case "Point" : {
+			longitude := geometryData[0].(float64)
+			latitude := geometryData[1].(float64)
+			this.geometry = append(this.geometry, MakeNewPoint(latitude, longitude))
+		}
+
+		case "LineString": {
+			for _, point := range geometryData {
+				convertedInterface := point.([]interface {})
+				longitude := convertedInterface[0].(float64)
+				latitude := convertedInterface[1].(float64)
+				this.geometry = append(this.geometry,  MakeNewPoint(latitude, longitude))
+			}
+		}
+		case "MultiLineString": {
+			interfaceLenght := len(geometryData)-1
+			for i := 0; i <= interfaceLenght; i++ {
+				convertedInnerPoint := geometryData[i].([]interface {})
+				if i == 0 {
+					for _, point := range convertedInnerPoint {
+						convertedInterface := point.([]interface {})
+						longitude := convertedInterface[0].(float64)
+						latitude := convertedInterface[1].(float64)
+						this.geometry = append(this.geometry, MakeNewPoint(latitude, longitude))
+					}
+				} else {
+					convertedInterface := convertedInnerPoint[1].([]interface {})
+					longitude := convertedInterface[0].(float64)
+					latitude := convertedInterface[1].(float64)
+					this.geometry = append(this.geometry, MakeNewPoint(latitude, longitude))
+				}
+			}
+		}
+	}
+
+	log.Println("jsonoutput", this)
+}
+
+func (this *Attribute) GetGeoJSON() (jsonOutput string) {
+	return ConvertPathToGeoJSON(this.geometry)
 }

@@ -27,7 +27,7 @@ const coordinateRegex = " ([-+\\d]?\\d+),([-+]?\\d+)"
 const nameRegex = "^(.*)(\t)"
 const typeRegex = "\t+(.*?)\\s+"
 
-func readLines(path string, fileName string) ([]Generic, error) {
+func readLines(path string, fileName string) (newData []bbbikeng.AttributeInterface, error error) {
 
 	file, err := os.Open(path + "/" + fileName)
 	if err != nil {
@@ -40,11 +40,37 @@ func readLines(path string, fileName string) ([]Generic, error) {
 	typeRegex := regexp.MustCompile(typeRegex)
 	coordsRegex := regexp.MustCompile(` ([-+\d]?\d+),([-+]?\d+)`)
 
-	var newGenerics []Generic
-
 	for scanner.Scan() {
 
-		var newGeneric Generic
+		var newGeneric bbbikeng.AttributeInterface
+		switch fileName {
+			case "strassen": {
+				newGeneric = new(bbbikeng.WayAttribute)
+			}
+			case "plaetze": {
+				newGeneric = new(bbbikeng.WayAttribute)
+			}
+			case "qualitaet_s": {
+				newGeneric = new(bbbikeng.QualityAttribute)
+			}
+			case "radwege_exact": {
+				newGeneric = new(bbbikeng.CyclepathAttribute)
+			}
+			case "green": {
+				newGeneric = new(bbbikeng.GreenwayAttribute)
+			}
+			case "nolighting": {
+				newGeneric = new(bbbikeng.UnlitAttribute)
+			}
+			case "ampeln": {
+				newGeneric = new(bbbikeng.TrafficLightAttribute)
+			}
+			case "handicap_s": {
+				newGeneric = new(bbbikeng.HandicapAttribute)
+			}
+
+		}
+
 
 		infoLine := scanner.Text()
 		infoLineConverted := bbbikeng.ConvertLatinToUTF8([]byte(infoLine))
@@ -59,8 +85,9 @@ func readLines(path string, fileName string) ([]Generic, error) {
 				name = untitled
 			}
 
-			newGeneric.Name = strings.TrimSpace(name)
-			newGeneric.Type = strings.TrimSpace(streetType)
+			newGeneric.SetName(strings.TrimSpace(name))
+			newGeneric.SetType(strings.TrimSpace(streetType))
+			var tempPath []bbbikeng.Point
 
 			for _, coord := range coords {
 				splittedCoords := strings.Split(coord, ",")
@@ -75,106 +102,89 @@ func readLines(path string, fileName string) ([]Generic, error) {
 				lat, lng := bbbikeng.ConvertStandardToWGS84(yPath, xPath)
 				point.Lat = lat
 				point.Lng = lng
-				newGeneric.Path = append(newGeneric.Path, point)
-
-
+				tempPath = append(tempPath, point)
 			}
-			newGenerics = append(newGenerics, newGeneric)
+			newGeneric.SetGeometry(tempPath)
+			newData = append(newData, newGeneric)
 		}
 
 	}
 
-	return newGenerics, scanner.Err()
+	return newData, scanner.Err()
 }
 
 func ParseData(path string) {
 
 	log.Println("Parsing Pathdata.")
-//	citys, fileErr := readLines(path, "Berlin")
+	var data []bbbikeng.AttributeInterface
 
 	streets, fileErr := readLines(path, "strassen")
 	places, fileErr := readLines(path, "plaetze")
-	for _, place := range places {
-		streets = append(streets, place)
-	}
-
 	qualitys, fileErr := readLines(path, "qualitaet_s")
 	cyclepaths, fileErr := readLines(path, "radwege_exact")
-	greens, fileErr := readLines(path, "green")
+	green, fileErr := readLines(path, "green")
 	lights, fileErr := readLines(path, "ampeln");
-	unlits, fileErr := readLines(path, "nolighting");
+	unlit, fileErr := readLines(path, "nolighting");
+	handicap, fileErr := readLines(path, "handicap_s");
+	for _, newData := range streets {
+		data = append(data, newData)
+	}
+	for _, newData := range places {
+		data = append(data, newData)
+	}
+	for _, newData := range qualitys {
+		data = append(data, newData)
+	}
+	for _, newData := range cyclepaths {
+		data = append(data, newData)
+	}
+	for _, newData := range green {
+		data = append(data, newData)
+	}
+	for _, newData := range lights {
+		data = append(data, newData)
+	}
+	for _, newData := range unlit {
+		data = append(data, newData)
+	}
+	for _, newData := range handicap {
+		data = append(data, newData)
+	}
 
 	if fileErr != nil {
 		log.Fatalf("Failed reading Strassen File: %s", fileErr)
 	}
 
+	for _, processedData := range data {
+		log.Println("Processed:", processedData.Name(), processedData.Type(), processedData.Geometry())
+		switch processedData.(type)  {
+			case *bbbikeng.WayAttribute: {
+				if len(processedData.Geometry()) > 1 {
+					bbbikeng.InsertStreetToDatabase(processedData.(*bbbikeng.WayAttribute))
+				} else {
+					bbbikeng.InsertPlaceToDatabase(processedData.(*bbbikeng.WayAttribute))
+				}
+			}
+			case *bbbikeng.CyclepathAttribute: {
+				bbbikeng.InsertCyclePathToDatabase(processedData.(*bbbikeng.CyclepathAttribute))
+			}
+			case *bbbikeng.GreenwayAttribute: {
+				bbbikeng.InsertGreenToDatabase(processedData.(*bbbikeng.GreenwayAttribute))
+			}
+			case *bbbikeng.QualityAttribute: {
+				bbbikeng.InsertQualityToDatabase(processedData.(*bbbikeng.QualityAttribute))
+			}
+			case *bbbikeng.UnlitAttribute: {
+				bbbikeng.InsertUnlitToDatabase(processedData.(*bbbikeng.UnlitAttribute))
+			}
+			case *bbbikeng.TrafficLightAttribute: {
+				bbbikeng.InsertStreetLightToDatabase(processedData.(*bbbikeng.TrafficLightAttribute))
+			}
+			case *bbbikeng.HandicapAttribute: {
+				bbbikeng.InsertHandicapToDatabase(processedData.(*bbbikeng.HandicapAttribute))
+			}
 
-	/*
-	for _, city := range citys {
-		var newCity bbbikeng.City
-		newCity.Name = city.Name
-		newCity.Geometry = city.Path
-		bbbikeng.InsertCityToDatabase(newCity)
-	} */
-
-
-	for _, street := range streets {
-		var newStreet bbbikeng.Street
-		newStreet.Name = street.Name
-		newStreet.Type = street.Type
-		newStreet.Path = street.Path
-		// some data are incomplete and produce only a point and not a multiline. points are inserted into place table instead of way
-		if len(newStreet.Path) > 1 {
-			bbbikeng.InsertStreetToDatabase(newStreet)
-		} else {
-			bbbikeng.InsertPlaceToDatabase(newStreet)
 		}
-	}
-
-	for i, cyclepath := range cyclepaths {
-		var newCyclepath bbbikeng.Street
-		newCyclepath.ID = i
-		newCyclepath.Name = cyclepath.Name
-		newCyclepath.Type = cyclepath.Type
-		newCyclepath.Path = cyclepath.Path
-		if len(newCyclepath.Path) > 1 {
-			bbbikeng.InsertCyclePathToDatabase(newCyclepath)
-		}
-	}
-
-	for i, green := range greens {
-		var newGreen bbbikeng.Street
-		newGreen.ID = i
-		newGreen.Name = green.Name
-		newGreen.Type = green.Type
-		newGreen.Path = green.Path
-		if len(newGreen.Path) > 1 {
-			bbbikeng.InsertGreenToDatabase(newGreen)
-		}
-	}
-
-	for i, quality := range qualitys {
-		var newQuality bbbikeng.Street
-		newQuality.ID = i
-		newQuality.Name = quality.Name
-		newQuality.Type = quality.Type
-		newQuality.Path = quality.Path
-		if len(newQuality.Path) > 1 {
-			bbbikeng.InsertQualityToDatabase(newQuality)
-		}
-	}
-
-	for _, lights := range lights {
-		var newLight bbbikeng.Street
-		newLight.Type = lights.Type
-		newLight.Path = lights.Path
-		bbbikeng.InsertStreetLightToDatabase(newLight);
-	}
-
-	for _, unlit := range unlits {
-		var newUnlit bbbikeng.Street
-		newUnlit.Path = unlit.Path
-		bbbikeng.InsertUnlitToDatabase(newUnlit);
 	}
 
 }

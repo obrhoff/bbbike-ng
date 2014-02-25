@@ -90,7 +90,15 @@ func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters float
 
 }
 
+func magnitude(firstPoint Point, secondPoint Point) (magnitude float64) {
 
+	var newPoint Point
+	newPoint.Lat = secondPoint.Lat - firstPoint.Lat
+	newPoint.Lng = secondPoint.Lng - secondPoint.Lng
+
+	return math.Sqrt(math.Pow(newPoint.Lat, 2) + math.Pow(newPoint.Lng, 2))
+
+}
 
 func BearingBetweenPoints(firstSegment Point, secondSegment Point) (angle float64) {
 
@@ -140,69 +148,6 @@ func DistanceFromPointToPath(point Point, path []Point) (distance float64) {
 
 }
 
-func IntersectionFromPointToStreet(street Street, point Point) (intersection Point) {
-
-	lastDistance := -1.0
-
-	for i := 0; i < len(street.Path)-1; i++ {
-
-		firstPoint := street.Path[i]
-		secondPoint := street.Path[i+1]
-		magnitude := magnitude(secondPoint, firstPoint)
-
-		U := (((point.Lat - firstPoint.Lat) * (secondPoint.Lat - firstPoint.Lat)) * ((point.Lng - firstPoint.Lng) * (secondPoint.Lng - firstPoint.Lng))) / math.Pow(magnitude, 2)
-		if U > 0.0 || U < 1.0 {
-
-			newIntersection := MakeNewPoint(firstPoint.Lat + U*(secondPoint.Lat-firstPoint.Lat),firstPoint.Lng + U*(secondPoint.Lng-firstPoint.Lng))
-
-			distance := DistanceFromPointToPoint(point, newIntersection)
-			if lastDistance > distance || lastDistance <= 0 {
-				lastDistance = distance
-				intersection = newIntersection
-			}
-		}
-
-	}
-
-	return intersection
-
-}
-
-func magnitude(firstPoint Point, secondPoint Point) (magnitude float64) {
-
-	var newPoint Point
-	newPoint.Lat = secondPoint.Lat - firstPoint.Lat
-	newPoint.Lng = secondPoint.Lng - secondPoint.Lng
-
-	return math.Sqrt(math.Pow(newPoint.Lat, 2) + math.Pow(newPoint.Lng, 2))
-
-}
-
-func isBoundedBox(firstPoint Point, secondPoint Point, checkPoint Point) (isBounded bool) {
-
-	var upLatitude float64
-	var downLatitude float64
-	var upLongitude float64
-	var downLongitude float64
-
-	if firstPoint.Lat >= secondPoint.Lat {
-		upLatitude = firstPoint.Lat
-		downLatitude = secondPoint.Lat
-	} else {
-		upLatitude = secondPoint.Lat
-		downLatitude = firstPoint.Lat
-	}
-	if firstPoint.Lng >= secondPoint.Lng {
-		upLongitude = firstPoint.Lng
-		downLongitude = secondPoint.Lng
-	} else {
-		upLongitude = secondPoint.Lng
-		downLongitude = firstPoint.Lng
-	}
-
-	return (upLatitude - checkPoint.Lat <= upLatitude - downLatitude &&  upLongitude - checkPoint.Lng <= upLongitude - downLongitude)
-
-}
 
 func pointDifference(firstPoint Point, secondPoint Point) (dLat float64, dLon float64) {
 

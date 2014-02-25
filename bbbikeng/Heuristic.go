@@ -4,17 +4,12 @@ import (
 	"log"
 )
 
-func (this *Route) CalculateHeuristic(parentNode Node, neighborNode Node) (heuristic float64) {
+func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node) (heuristic float64) {
 
 	heuristic = DistanceFromPointToPoint(neighborNode.NodeGeometry, this.endNode.NodeGeometry)
-
-	log.Println("Calculating score for:", neighborNode)
-
+	neighborNode.StreetFromParentNode.Attributes = GetRelevantAttributes(parentNode, neighborNode)
+	log.Println("Calculating score for:", neighborNode.StreetFromParentNode.Attributes)
 	for _, attribute := range neighborNode.StreetFromParentNode.Attributes {
-
-		if !attribute.Relevance() {
-			continue
-		}
 
 		log.Println("Calculating Attributescore for:", attribute)
 		heuristic += attribute.CalculateScore(&this.Preferences)
@@ -22,7 +17,23 @@ func (this *Route) CalculateHeuristic(parentNode Node, neighborNode Node) (heuri
 
 	}
 
-	return heuristic
+	return
+
+
+}
+
+func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttributes []AttributeInterface){
+
+	flipped := !parentNode.NodeGeometry.Compare(neighborNode.StreetFromParentNode.Path[0])
+	if flipped {
+		relevantAttributes = neighborNode.StreetFromParentNode.NormalAttribute
+	} else {
+		relevantAttributes = neighborNode.StreetFromParentNode.FlippedAttribute
+	}
+	for _, globalAttribute := range neighborNode.StreetFromParentNode.GlobalAttribute {
+		relevantAttributes = append(relevantAttributes, globalAttribute)
+	}
+	return relevantAttributes
 
 }
 
@@ -42,7 +53,7 @@ func (this *GreenwayAttribute) CalculateScore (preference *Preferences) (score f
 }
 func (this *QualityAttribute) CalculateScore (preference *Preferences) (score float64) {
 
-	log.Println("Unlit Score:")
+	log.Println("Quality Score:")
 
 
 	return score
@@ -57,6 +68,14 @@ func (this *UnlitAttribute) CalculateScore (preference *Preferences) (score floa
 func (this *TrafficLightAttribute) CalculateScore (preference *Preferences) (score float64) {
 
 	log.Println("TrafficLight Score:")
+
+
+	return score
+}
+
+func (this *HandicapAttribute) CalculateScore (preference *Preferences) (score float64) {
+
+	log.Println("Handicap Score:")
 
 
 	return score

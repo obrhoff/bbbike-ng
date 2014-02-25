@@ -2,7 +2,6 @@ package bbbikeng
 
 import (
 	"log"
-	"reflect"
 )
 
 type Route struct {
@@ -15,9 +14,10 @@ type Route struct {
 
 	startNode Node
 	endNode Node
-	Preferences Preferences
 
+	Preferences Preferences
 	TrafficLights int
+	Attributes []AttributeInterface
 
 }
 
@@ -56,6 +56,11 @@ func (this *Route) constructRoute(finalNode Node) {
 	for _, node := range this.nodes {
 
 		streetPath := flippPath(node)
+
+		for _, attribute := range node.StreetFromParentNode.Attributes{
+			this.Attributes = append(this.Attributes, attribute)
+		}
+
 		if node.NodeID == startNode.NodeID || node.NodeID == endNode.NodeID {
 
 		// needs to be fixed for first node
@@ -80,7 +85,6 @@ func (this *Route) constructRoute(finalNode Node) {
 				node.StreetFromParentNode.PathIndex = len(this.way)-1
 				this.detailed = append(this.detailed, &node.StreetFromParentNode)
 			}
-
 			for i := 1; i < len(streetPath); i++ {
 				this.way = append(this.way, streetPath[i])
 			}
@@ -89,61 +93,6 @@ func (this *Route) constructRoute(finalNode Node) {
 	}
 
 	this.distance = DistanceFromLinePoint(this.way)
-
-}
-
-func(this *Path) FilterRelevantAttributes(parentNode Node)() {
-
-	var relevantAttributes []AttributeInterface
-	for _, attribute := range this.Attributes {
-
-		attributeGeometry := attribute.Geometry()
-		isRelevant := false
-		if attributeGeometry[0].Compare(parentNode.NodeGeometry){
-			isRelevant = true
-		} else {
-
-			category := reflect.TypeOf(attribute).Elem().Name()
-			if len(attributeGeometry) == 1 ||  (category != "QualityAttribute" && category != "CyclepathAttribute"){
-				isRelevant = true
-			} else {
-				isFlippedDirection := false
-				// determine if we start from above or the buttom of the street
-				if this.Path[len(this.Path)-1].Compare(parentNode.NodeGeometry) {
-					isFlippedDirection = true
-				}
-				// determine where we match our attribute with the street section
-				var startIndex int
-				for i := 0; i <= len(this.Path); i++ {
-					pathPoint := this.Path[i]
-					if attributeGeometry[0].Compare(pathPoint) {
-						startIndex = i
-						break
-					}
-				}
-				// determine if attribute follows path. If not it is not relevant
-				if !isFlippedDirection {
-					if len(this.Path)-1 > startIndex {
-						if this.Path[startIndex+1].Compare(attributeGeometry[1]) {
-							isRelevant = true
-						}
-					}
-				} else {
-					if 0 < startIndex {
-						if this.Path[startIndex-1].Compare(attributeGeometry[1]) {
-							isRelevant = true
-						}
-					}
-				}
-			}
-
-		}
-
-		attribute.SetRelevance(isRelevant)
-		relevantAttributes = append(relevantAttributes, attribute)
-	}
-
-	this.Attributes = relevantAttributes
 
 }
 
@@ -203,8 +152,8 @@ func (this *Route) GetAStarRoute() (){
 
 			if !openList.ContainsByKey(neighbor.NodeID) {
 				gScoreIsBest = true;
-				neighbor.StreetFromParentNode.FilterRelevantAttributes(currentNode)
-				neighbor.Heuristic = this.CalculateHeuristic(currentNode, neighbor)
+				//neighbor.StreetFromParentNode.FilterRelevantAttributes(currentNode)
+				neighbor.Heuristic = this.CalculateHeuristic(&currentNode, &neighbor)
 				openList.Add(neighbor)
 			}
 			if(gScore < neighbor.Heuristic) {
@@ -226,44 +175,7 @@ func (this *Route) GetAStarRoute() (){
 
 }
 
-func (this *Route) GetGeojson() (geojson GeoJSON) {
 
-	geojson.Type = "LineString"
-	for _, segment := range this.way {
-		var newPoint [2]float64
-		newPoint[0] = segment.Lng
-		newPoint[1] = segment.Lat
-		geojson.Coordinates = append(geojson.Coordinates, newPoint)
-	}
-	return geojson
-
-}
-
-func (this *Route) GetBBJson() (json BBJSON) {
-
-	for _, segment := range this.way {
-		var newPoint [2]float64
-		newPoint[0] = segment.Lng
-		newPoint[1] = segment.Lat
-		json.Path = append(json.Path, newPoint)
-	}
-
-	for _, path := range this.detailed {
-		var newInstruction BBJSONInstruction
-		newInstruction.Name = path.Name
-		newInstruction.Index = path.PathIndex
-		newInstruction.Type = path.Type
-//		newInstruction.Quality = path.Attributes.Quality
-		json.Instruction = append(json.Instruction, newInstruction)
-	}
-
-	json.Preferences = this.Preferences
-	json.Lights = this.TrafficLights
-	json.Distance = int(this.distance * 1000.0)
-	json.Response = true
-
-	return json
-}
 
 func (this *Preferences) SetPreferedQuality(preferedQuality string){
 

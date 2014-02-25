@@ -45,7 +45,6 @@ func StartBBBikeServer() {
 		handler.EnableRelaxedContentType = false
 		handler.EnableStatusService = true
 		handler.SetRoutes(
-		rest.Route{"GET", "/search?:", Search},
 		rest.Route{"GET", "/route?:", Route},
 	)
 
@@ -57,17 +56,6 @@ func StartParsingBBBikeData(path string) {
 
 	Import.ParseData(path)
 
-}
-
-func Search(w *rest.ResponseWriter, req *rest.Request) {
-
-	parameters := req.URL.Query()
-	search, okSearch := parameters["name"]
-	if okSearch && len(search) > 0 {
-		results := bbbikeng.SearchForStreetName(search[0])
-		fmt.Println("Results:", results)
-		w.WriteJson(&results)
-	}
 }
 
 func Route(w *rest.ResponseWriter, req *rest.Request) {
