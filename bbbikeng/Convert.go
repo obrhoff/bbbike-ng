@@ -195,6 +195,9 @@ func (this *Attribute) SetPathFromGeoJSON(jsonInput interface {}) () {
 		return
 	}
 
+	log.Println("Parsing Geo:", geometryType)
+	log.Println("Map:", assertedMap)
+
 	geometryData := assertedMap["coordinates"].([]interface {})
 	switch geometryType {
 		case "Point" : {

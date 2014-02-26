@@ -6,35 +6,31 @@ import (
 
 func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node) (heuristic float64) {
 
-	heuristic = DistanceFromPointToPoint(neighborNode.NodeGeometry, this.endNode.NodeGeometry)
-	totalDistance := DistanceFromLinePoint(neighborNode.StreetFromParentNode.Path)
+	distanceToDestiny := DistanceFromPointToPoint(neighborNode.NodeGeometry, this.endNode.NodeGeometry)
+	pathDistance := DistanceFromLinePoint(neighborNode.StreetFromParentNode.Path)
+	score := 1.0
+
 	sortedAttributes, attributesPerIndex, distancePerIndex := GetRelevantAttributes(parentNode, neighborNode)
 	neighborNode.StreetFromParentNode.Attributes = sortedAttributes
 
 	for key, attributeSegments := range attributesPerIndex {
-
 		distanceFromSegment := distancePerIndex[key]
-		weightOfTotal := (distanceFromSegment / totalDistance)
-		segmentScore := 0.0
+		weightOfTotal := (distanceFromSegment / pathDistance)
+		segmentScore := 1.0
 		for _, attribute := range attributeSegments{
 			attr := *attribute
 			segmentScore += attr.CalculateScore(&this.Preferences)
 		}
-
-		log.Println("Total weightOfTotal", weightOfTotal)
-
-
+		score *= (segmentScore * weightOfTotal)
 	}
-	log.Println("Total Distance", totalDistance)
-	log.Println("Attributes:", attributesPerIndex)
-	log.Println("Distance Per Index:", distancePerIndex)
 
-	return
-
+	return  distanceToDestiny
 
 }
 
 func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttributes []AttributeInterface, attributesPerIndex map[int][]*AttributeInterface, distancePerIndex map[int]float64){
+
+	log.Println("StreetID:", neighborNode.StreetFromParentNode.ID)
 
 	flipped := !parentNode.NodeGeometry.Compare(neighborNode.StreetFromParentNode.Path[0])
 	if flipped {
@@ -58,6 +54,7 @@ func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttri
 	}
 
 	for _, attribute := range relevantAttributes {
+
 		attributeGeometry := attribute.Geometry()
 		firstGeometry := attributeGeometry[0]
 		lastGeometry := attributeGeometry[len(attributeGeometry)-1]
@@ -97,8 +94,34 @@ func (this *GreenwayAttribute) CalculateScore (preference *Preferences) (score f
 }
 func (this *QualityAttribute) CalculateScore (preference *Preferences) (score float64) {
 
-	log.Println("Quality Score:")
+	qualityPreference := preference.Quality
+	attribute := this.Type()
 
+	log.Println("Quality:", attribute)
+	log.Println("Preference:", *preference)
+
+	if qualityPreference == "Q0" {
+		switch attribute {
+			case "Q2":
+				score = 0.5
+			case "Q1":
+				score = 0.75
+			case "Q0":
+				score = 1.0
+		}
+	}
+	if qualityPreference == "Q2" {
+		switch attribute {
+		case "Q2":
+			score = 0.75
+		case "Q1":
+			score = 1.0
+		case "Q0":
+			score = 1.0
+		}
+	}
+
+	log.Println("Quality Score:", score)
 
 	return score
 }

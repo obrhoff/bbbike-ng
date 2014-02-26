@@ -179,10 +179,11 @@ func (this *Route) GetAStarRoute() (){
 
 func (this *Preferences) SetPreferedQuality(preferedQuality string){
 
-	if preferedQuality != "Q0"  && preferedQuality != "Q2" {
+	if preferedQuality != "Q0" && preferedQuality != "Q2" {
 		log.Printf("Unknown Streetypes Setting")
 		return
 	}
+
 	this.Quality = preferedQuality
 
 }
@@ -220,6 +221,5 @@ func (this *Preferences) SetIncludeFerries(includeFerries bool){
 }
 
 func (this *Preferences) SetPreferedSpeed(speed int64){
-
 	this.Speed = speed
 }
