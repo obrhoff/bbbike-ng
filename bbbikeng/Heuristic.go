@@ -1,7 +1,7 @@
 package bbbikeng
 
 import (
-	"log"
+
 )
 
 func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node) (heuristic float64) {
@@ -29,8 +29,6 @@ func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node) (heu
 }
 
 func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttributes []AttributeInterface, attributesPerIndex map[int][]*AttributeInterface, distancePerIndex map[int]float64){
-
-	log.Println("StreetID:", neighborNode.StreetFromParentNode.ID)
 
 	flipped := !parentNode.NodeGeometry.Compare(neighborNode.StreetFromParentNode.Path[0])
 	if flipped {
@@ -80,14 +78,11 @@ func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttri
 
 func (this *CyclepathAttribute) CalculateScore (preference *Preferences) (score float64) {
 
-	log.Println("Cyclepath Score:")
-
 	return score
 }
 
 func (this *GreenwayAttribute) CalculateScore (preference *Preferences) (score float64) {
 
-	log.Println("Greenway Score:")
 
 
 	return score
@@ -96,9 +91,6 @@ func (this *QualityAttribute) CalculateScore (preference *Preferences) (score fl
 
 	qualityPreference := preference.Quality
 	attribute := this.Type()
-
-	log.Println("Quality:", attribute)
-	log.Println("Preference:", *preference)
 
 	if qualityPreference == "Q0" {
 		switch attribute {
@@ -121,29 +113,18 @@ func (this *QualityAttribute) CalculateScore (preference *Preferences) (score fl
 		}
 	}
 
-	log.Println("Quality Score:", score)
 
 	return score
 }
 func (this *UnlitAttribute) CalculateScore (preference *Preferences) (score float64) {
 
-	log.Println("Unlit Score:")
-
 
 	return score
 }
 func (this *TrafficLightAttribute) CalculateScore (preference *Preferences) (score float64) {
-
-	log.Println("TrafficLight Score:")
-
-
 	return score
 }
 
 func (this *HandicapAttribute) CalculateScore (preference *Preferences) (score float64) {
-
-	log.Println("Handicap Score:")
-
-
 	return score
 }

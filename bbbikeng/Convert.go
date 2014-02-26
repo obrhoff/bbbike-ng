@@ -163,7 +163,7 @@ func ParseAttributes(raw string) (attributes []AttributeInterface){
 					newAttribute = new(GreenwayAttribute)
 				case "QA":
 					newAttribute = new(QualityAttribute)
-				case "LA":
+				case "UA":
 					newAttribute = new(UnlitAttribute)
 				case "TA":
 					newAttribute = new(TrafficLightAttribute)
@@ -192,11 +192,10 @@ func (this *Attribute) SetPathFromGeoJSON(jsonInput interface {}) () {
 	geometryType := assertedMap["type"]
 
 	if geometryType != "LineString" && geometryType != "Point" && geometryType != "MultiLineString" {
+
+		log.Fatal("Error parsing Geometry:", assertedMap)
 		return
 	}
-
-	log.Println("Parsing Geo:", geometryType)
-	log.Println("Map:", assertedMap)
 
 	geometryData := assertedMap["coordinates"].([]interface {})
 	switch geometryType {

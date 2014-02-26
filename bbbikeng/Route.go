@@ -117,20 +117,14 @@ func (this *Route) GetAStarRoute() (){
 
 	for openList.Length() > 0 {
 
-		var bestNode Node
-		bestNode.NodeID = -1
+		currentNode := openList.data[0]
 		for _, node := range openList.data {
-			if bestNode.NodeID < 0 {
-				bestNode = node
-			} else {
-				if bestNode.F >= node.F {
-					bestNode = node
-				}
+			if node.F < currentNode.F || currentNode.F <= 0  {
+				currentNode = node
 			}
 		}
 
-		currentNode := bestNode
-		log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name, currentNode.StreetFromParentNode.Path, ", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
+		//log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name, currentNode.StreetFromParentNode.Path, ", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
 		if currentNode.NodeID == this.endNode.NodeID {
 			this.constructRoute(currentNode)
 			return
@@ -147,16 +141,16 @@ func (this *Route) GetAStarRoute() (){
 				continue
 			}
 
-			gScore := DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
+			// for some reason it's getting slow with this score
+			gScore := currentNode.G + DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
+			//gScore := DistanceFromPointToPoint(this.startNode.NodeGeometry, currentNode.NodeGeometry) + DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
 			gScoreIsBest := false;
 
 			if !openList.ContainsByKey(neighbor.NodeID) {
 				gScoreIsBest = true;
-				//neighbor.StreetFromParentNode.FilterRelevantAttributes(currentNode)
 				neighbor.Heuristic = this.CalculateHeuristic(&currentNode, &neighbor)
 				openList.Add(neighbor)
-			}
-			if(gScore < neighbor.Heuristic) {
+			} else if(gScore < neighbor.G) {
 				gScoreIsBest = true;
 			}
 
@@ -165,9 +159,9 @@ func (this *Route) GetAStarRoute() (){
 				neighbor.G = gScore
 				neighbor.F = neighbor.G + neighbor.Heuristic
 				neighbor.ParentNodes = &currentNode
-				log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)
-				log.Println("Street:", neighbor.StreetFromParentNode.Name, "Path:", neighbor.StreetFromParentNode.Path, " Attributes:", neighbor.StreetFromParentNode.Attributes)
-				log.Println("Score:", neighbor.Heuristic)
+			//	log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)
+			//	log.Println("Street:", neighbor.StreetFromParentNode.Name, "Path:", neighbor.StreetFromParentNode.Path, " Attributes:", neighbor.StreetFromParentNode.Attributes)
+			//	log.Println("G:", neighbor.G, "H:", neighbor.Heuristic)
 				openList.Add(neighbor)
 			}
 		}
