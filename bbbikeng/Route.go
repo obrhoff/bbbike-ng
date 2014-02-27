@@ -2,13 +2,15 @@ package bbbikeng
 
 import (
 	"log"
+	"fmt"
+	"container/heap"
 )
 
 type Route struct {
 
 	way []Point
 	detailed []*Path
-	distance float64
+	distance int
 	time int
 	nodes []*Node
 
@@ -112,19 +114,19 @@ func (this *Route) GetAStarRoute() (){
 
 	var openList = NewNodeSet()
 	var closedList = NewNodeSet()
-
+	
 	openList.Add(this.startNode)
 
 	for openList.Length() > 0 {
 
-		currentNode := openList.data[0]
+		var currentNode Node
 		for _, node := range openList.data {
 			if node.F < currentNode.F || currentNode.F <= 0  {
 				currentNode = node
 			}
 		}
 
-		//log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name, currentNode.StreetFromParentNode.Path, ", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
+		fmt.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name, currentNode.StreetFromParentNode.Path, ", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
 		if currentNode.NodeID == this.endNode.NodeID {
 			this.constructRoute(currentNode)
 			return

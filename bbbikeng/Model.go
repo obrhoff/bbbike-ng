@@ -14,10 +14,10 @@ type Node struct {
 
 	ParentNodes *Node
 	Walkable bool
-	Heuristic float64
+	Heuristic int
 
-	G float64
-	F float64
+	G int
+	F int
 
 	TrafficLight bool
 	Value interface{}

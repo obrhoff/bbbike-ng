@@ -4,7 +4,7 @@ import (
 
 )
 
-func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node) (heuristic float64) {
+func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node) (heuristic int) {
 
 	distanceToDestiny := DistanceFromPointToPoint(neighborNode.NodeGeometry, this.endNode.NodeGeometry)
 	pathDistance := DistanceFromLinePoint(neighborNode.StreetFromParentNode.Path)
@@ -21,14 +21,14 @@ func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node) (heu
 			attr := *attribute
 			segmentScore += attr.CalculateScore(&this.Preferences)
 		}
-		score *= (segmentScore * weightOfTotal)
+		score *= (segmentScore * float64(weightOfTotal))
 	}
 
 	return  distanceToDestiny
 
 }
 
-func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttributes []AttributeInterface, attributesPerIndex map[int][]*AttributeInterface, distancePerIndex map[int]float64){
+func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttributes []AttributeInterface, attributesPerIndex map[int][]*AttributeInterface, distancePerIndex map[int]int){
 
 	flipped := !parentNode.NodeGeometry.Compare(neighborNode.StreetFromParentNode.Path[0])
 	if flipped {
@@ -41,7 +41,7 @@ func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttri
 	}
 
 	attributesPerIndex = make(map[int][]*AttributeInterface)
-	distancePerIndex = make(map[int]float64)
+	distancePerIndex = make(map[int]int)
 
 	for i := 0; i < len(neighborNode.StreetFromParentNode.Path)-1; i++ {
 		if i+1 <= len(neighborNode.StreetFromParentNode.Path)-1 {

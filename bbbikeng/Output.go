@@ -56,7 +56,7 @@ func (this *Route) GetBBJson() (json BBJSON) {
 
 	json.Preferences = this.Preferences
 	json.Lights = this.TrafficLights
-	json.Distance = int(this.distance * 1000.0)
+	json.Distance = this.distance
 	json.Response = true
 
 	return json

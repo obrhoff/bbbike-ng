@@ -74,7 +74,7 @@ func flippPath(node *Node) (path []Point) {
 	return node.StreetFromParentNode.Path
 }
 
-func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters float64) {
+func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters int) {
 
 	dLat := degreeToRadians(secondPoint.Lat - firstPoint.Lat)
 	dLng := degreeToRadians(secondPoint.Lng - firstPoint.Lng)
@@ -86,7 +86,7 @@ func DistanceFromPointToPoint(firstPoint Point, secondPoint Point) (meters float
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 	d := RADIUS * c;
 
-	return d
+	return int(d * 1000)
 
 }
 
@@ -111,7 +111,7 @@ func BearingBetweenPoints(firstSegment Point, secondSegment Point) (angle float6
 }
 
 
-func DistanceFromLinePoint(points []Point) (distance float64) {
+func DistanceFromLinePoint(points []Point) (distance int) {
 
 	for i := 0; i < len(points)-1; i++ {
 		firstPoint := points[i]
@@ -121,7 +121,7 @@ func DistanceFromLinePoint(points []Point) (distance float64) {
 	return distance
 }
 
-func DistanceFromPointToPath(point Point, path []Point) (distance float64) {
+func DistanceFromPointToPath(point Point, path []Point) (distance int) {
 
 	distance = -1.0
 	for i := 0; i < len(path)-1; i++ {
