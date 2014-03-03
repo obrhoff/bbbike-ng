@@ -302,6 +302,7 @@ func ConnectToDatabase() {
 
 	var err error
 	Connection, err = sql.Open("postgres", connectionParameter)
+	Connection.SetMaxIdleConns(5)
 	err = Connection.Ping() // This DOES open a connection if necessary. This makes sure the database is accessible
 
 	if err != nil {

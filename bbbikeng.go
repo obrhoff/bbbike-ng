@@ -20,7 +20,6 @@ var dataImportPathFlag = flag.String("import-path", "./bbbike/data", "bbbike dat
 func main() {
 
 	flag.Parse()
-
 	bbbikeng.ConnectToDatabase()
 	defer bbbikeng.Connection.Close()
 
@@ -152,6 +151,7 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 		}
 
 	}
+
 
 	log.Printf("Start Routing from: %f,%f to %f,%f", startPoint.Lat, startPoint.Lng, endPoint.Lat, endPoint.Lng)
 	log.Printf("Preferences:", route.Preferences)

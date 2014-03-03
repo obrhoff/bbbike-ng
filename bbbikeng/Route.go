@@ -2,6 +2,8 @@ package bbbikeng
 
 import (
 	"log"
+	"sync"
+	"sort"
 )
 
 type Route struct {
@@ -110,60 +112,58 @@ func (this *Route) GetAStarRoute() (){
 	log.Println("StartNode:", this.startNode.NodeID , "(",this.startNode.StreetFromParentNode.Name,") Geometry:", this.startNode.NodeGeometry.Lat, "," ,this.startNode.NodeGeometry.Lng)
 	log.Println("EndNode:", this.endNode.NodeID , "(",this.endNode.StreetFromParentNode.Name,") Geometry:", this.endNode.NodeGeometry.Lat, "," ,this.endNode.NodeGeometry.Lng)
 
-	var openList = NewNodeSet()
-	var closedList = NewNodeSet()
-	
+	openList := NewNodeSet()
+	closedList := NewNodeSet()
 	openList.Add(&this.startNode)
+
+	var wg sync.WaitGroup
 
 	for openList.Length() > 0 {
 
-		currentNode := openList.data[0]
+		wg.Add(openList.Length())
+		for _, node := range openList.data {
 
-		log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name, currentNode.StreetFromParentNode.Path, ", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
-		if currentNode.NodeID == this.endNode.NodeID {
-			this.constructRoute(*currentNode)
-			return
-		}
+			openList.Remove(node)
+			closedList.Add(node)
 
-		openList.Remove(currentNode)
-		closedList.Add(currentNode)
+			go func(currentNode *Node) {
+				defer wg.Done()
 
-		neighbors := GetNeighborNodesFromNode(*currentNode);
-
-		for _, neighbor := range neighbors {
-
-			if closedList.Contains(neighbor) ||  !neighbor.Walkable  {
-				continue
-			}
-
-			if openList.Contains(neighbor) {
-				neighbor = openList.GetByKey(neighbor.NodeID)
-			}
-
-			gScore := currentNode.G + DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
-
-			if !closedList.Contains(neighbor) && (gScore < neighbor.G || !neighbor.Valid) {
-				neighbor.Heuristic = this.CalculateHeuristic(currentNode, neighbor)
-				neighbor.G = gScore
-				neighbor.F = neighbor.G + neighbor.Heuristic
-				neighbor.Valid = true
-				neighbor.ParentNodes = currentNode
-				log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)
-				//	log.Println("Street:", neighbor.StreetFromParentNode.Name, "Path:", neighbor.StreetFromParentNode.Path, " Attributes:", neighbor.StreetFromParentNode.Attributes)
-				//	log.Println("G:", neighbor.G, "H:", neighbor.Heuristic)
-				//	fmt.Println("Try to add:", neighbor)
-				if !openList.Contains(neighbor) {
-					openList.Add(neighbor)
+				log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name, currentNode.StreetFromParentNode.Path, ", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
+				if currentNode.NodeID == this.endNode.NodeID {
+					this.constructRoute(*currentNode)
+					return
 				}
-			}
+
+				neighbors := GetNeighborNodesFromNode(*currentNode);
+				for _, neighbor := range neighbors {
+
+					if closedList.Contains(neighbor) ||  !neighbor.Walkable  {
+						continue
+					}
+					if openList.Contains(neighbor) {
+						neighbor = openList.GetByKey(neighbor.NodeID)
+					}
+					gScore := currentNode.G + DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
+					if !closedList.Contains(neighbor) && (gScore < neighbor.G || !neighbor.Valid) {
+						neighbor.Heuristic = this.CalculateHeuristic(currentNode, neighbor)
+						neighbor.G = gScore
+						neighbor.F = neighbor.G + neighbor.Heuristic
+						neighbor.Valid = true
+						neighbor.ParentNodes = currentNode
+						log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name," - ", neighbor.F,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)
+						if !openList.Contains(neighbor) {
+							openList.Add(neighbor)
+						}
+					}
+				}
+			}(node)
 
 		}
-
+		wg.Wait()
+		sort.Sort(openList.data)
 	}
-
 }
-
-
 
 func (this *Preferences) SetPreferedQuality(preferedQuality string){
 

@@ -1,7 +1,7 @@
 package bbbikeng
 
 import (
-	"sort"
+	"sync"
 )
 
 type nodeData []*Node
@@ -9,22 +9,28 @@ type nodeData []*Node
 type NodeSet struct {
 	data nodeData
 	closedData nodeData
+	mu  sync.Mutex
 }
 
 func (this *NodeSet) Add(value *Node) {
+
 	contains := this.Contains(value)
+	this.mu.Lock()
 	if !contains {
 		this.data = append(this.data, value)
-		sort.Sort(this.data)
 	}
+	this.mu.Unlock()
 }
 
 func (this *NodeSet) GetByKey(key int) (value *Node) {
+	this.mu.Lock()
 	for _, node := range this.data {
 		if node.NodeID == key {
+			this.mu.Unlock()
 			return node
 		}
 	}
+	this.mu.Unlock()
 	return nil
 }
 
@@ -33,22 +39,26 @@ func (this *NodeSet) Remove(value *Node) {
 }
 
 func (this *NodeSet) RemoveByKey(key int) () {
+	this.mu.Lock()
 	var newData nodeData
 	for _, node := range this.data {
 		if node.NodeID != key {
 			newData = append(newData, node)
 		}
 	}
-	sort.Sort(newData)
 	this.data = newData
+	this.mu.Unlock()
 }
 
 func (this *NodeSet) ContainsByKey(key int) (exists bool) {
+	this.mu.Lock()
 	for _, node := range this.data{
 		if node.NodeID == key {
+			this.mu.Unlock()
 			return true
 		}
 	}
+	this.mu.Unlock()
 	return false
 }
 
