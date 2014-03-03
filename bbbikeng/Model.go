@@ -19,6 +19,7 @@ type Node struct {
 	G int
 	F int
 
+	Valid bool
 	TrafficLight bool
 	Value interface{}
 }

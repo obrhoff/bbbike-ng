@@ -52,6 +52,16 @@ func MakeNewPointFromString(lat string, lng string) (newPoint Point) {
 	return MakeNewPoint(xPath, yPath)
 }
 
+func (f *Point) PointIsValid() bool {
+	return f.Lat != 0.0 && f.Lng != 0.0
+}
+
+func (f *Point) Compare(comparePoint Point) (equal bool) {
+	thresholdLat := math.Abs(math.Abs(f.Lat) - math.Abs(comparePoint.Lat))
+	thresholdLng := math.Abs(math.Abs(f.Lng) - math.Abs(comparePoint.Lng))
+	return (thresholdLat <= 0.0000001 && thresholdLng <= 0.0000001)
+}
+
 func (f *Point) LatitudeLongitudeAsString() (lat string, lng string) {
 	lat = strconv.FormatFloat(f.Lat, 'f', 6, 64)
 	lng = strconv.FormatFloat(f.Lng, 'f', 6, 64)

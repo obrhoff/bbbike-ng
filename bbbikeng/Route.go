@@ -2,8 +2,6 @@ package bbbikeng
 
 import (
 	"log"
-	"fmt"
-	"container/heap"
 )
 
 type Route struct {
@@ -115,58 +113,52 @@ func (this *Route) GetAStarRoute() (){
 	var openList = NewNodeSet()
 	var closedList = NewNodeSet()
 	
-	openList.Add(this.startNode)
+	openList.Add(&this.startNode)
 
 	for openList.Length() > 0 {
 
-		var currentNode Node
-		for _, node := range openList.data {
-			if node.F < currentNode.F || currentNode.F <= 0  {
-				currentNode = node
-			}
-		}
+		currentNode := openList.data[0]
 
-		fmt.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name, currentNode.StreetFromParentNode.Path, ", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
+		log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name, currentNode.StreetFromParentNode.Path, ", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
 		if currentNode.NodeID == this.endNode.NodeID {
-			this.constructRoute(currentNode)
+			this.constructRoute(*currentNode)
 			return
 		}
 
 		openList.Remove(currentNode)
 		closedList.Add(currentNode)
 
-		neighbors := GetNeighborNodesFromNode(currentNode);
+		neighbors := GetNeighborNodesFromNode(*currentNode);
 
 		for _, neighbor := range neighbors {
 
-			if closedList.Contains(neighbor) || (!neighbor.Walkable && neighbor.NodeID != this.endNode.NodeID)  {
+			if closedList.Contains(neighbor) ||  !neighbor.Walkable  {
 				continue
 			}
 
-			// for some reason it's getting slow with this score
-			gScore := currentNode.G + DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
-			//gScore := DistanceFromPointToPoint(this.startNode.NodeGeometry, currentNode.NodeGeometry) + DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
-			gScoreIsBest := false;
-
-			if !openList.ContainsByKey(neighbor.NodeID) {
-				gScoreIsBest = true;
-				neighbor.Heuristic = this.CalculateHeuristic(&currentNode, &neighbor)
-				openList.Add(neighbor)
-			} else if(gScore < neighbor.G) {
-				gScoreIsBest = true;
+			if openList.Contains(neighbor) {
+				neighbor = openList.GetByKey(neighbor.NodeID)
 			}
 
-			if (gScoreIsBest) {
-				openList.Remove(neighbor)
+			gScore := currentNode.G + DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
+
+			if !closedList.Contains(neighbor) && (gScore < neighbor.G || !neighbor.Valid) {
+				neighbor.Heuristic = this.CalculateHeuristic(currentNode, neighbor)
 				neighbor.G = gScore
 				neighbor.F = neighbor.G + neighbor.Heuristic
-				neighbor.ParentNodes = &currentNode
-			//	log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)
-			//	log.Println("Street:", neighbor.StreetFromParentNode.Name, "Path:", neighbor.StreetFromParentNode.Path, " Attributes:", neighbor.StreetFromParentNode.Attributes)
-			//	log.Println("G:", neighbor.G, "H:", neighbor.Heuristic)
-				openList.Add(neighbor)
+				neighbor.Valid = true
+				neighbor.ParentNodes = currentNode
+				log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)
+				//	log.Println("Street:", neighbor.StreetFromParentNode.Name, "Path:", neighbor.StreetFromParentNode.Path, " Attributes:", neighbor.StreetFromParentNode.Attributes)
+				//	log.Println("G:", neighbor.G, "H:", neighbor.Heuristic)
+				//	fmt.Println("Try to add:", neighbor)
+				if !openList.Contains(neighbor) {
+					openList.Add(neighbor)
+				}
 			}
+
 		}
+
 	}
 
 }

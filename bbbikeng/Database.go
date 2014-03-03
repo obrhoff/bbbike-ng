@@ -224,7 +224,7 @@ func FindNearestNode(point Point) (closestNode Node){
 }
 
 
-func GetNeighborNodesFromNode(node Node) (nodes []Node) {
+func GetNeighborNodesFromNode(node Node) (nodes []*Node) {
 
 	rows, err := Connection.Query("SELECT neighbor.id, networkid, wayid, type, attributesToJson(defaults) as defaults, attributesToJson(normal) as normal, attributesToJson(reversed) as reversed , name, st_asgeojson(neighbor.node_geo) as nodecoord, st_asgeojson(geometry) as path, neighbor.walkable, neighbor.trafficlight FROM network, ( SELECT parent, id, geometry as node_geo, walkable, trafficlight FROM node JOIN (select id as parent, unnest(neighbors) as id from node where id = $1) x USING (id)) as neighbor WHERE network.nodes @> ARRAY[neighbor.parent,neighbor.id]", node.NodeID)
 	if err != nil {
@@ -251,12 +251,14 @@ func GetNeighborNodesFromNode(node Node) (nodes []Node) {
 		newNode.StreetFromParentNode.NormalAttribute = ParseAttributes(normalAttributes)
 		newNode.StreetFromParentNode.FlippedAttribute = ParseAttributes(flippedAttributes)
 
-		nodes = append(nodes, newNode)
+		nodes = append(nodes, &newNode)
 	}
 
 	return nodes
 
 }
+
+
 
 func SearchForNearestStreetFromPoint(point Point) (street WayAttribute) {
 

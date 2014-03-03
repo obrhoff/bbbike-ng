@@ -1,54 +1,58 @@
 package bbbikeng
 
 import (
-	"math"
-
+	"sort"
 )
 
-
-func (f *Point) PointIsValid() bool {
-
-	return f.Lat != 0.0 && f.Lng != 0.0
-
-}
-
-func (f *Point) Compare(comparePoint Point) (equal bool) {
-
-	thresholdLat := math.Abs(math.Abs(f.Lat) - math.Abs(comparePoint.Lat))
-	thresholdLng := math.Abs(math.Abs(f.Lng) - math.Abs(comparePoint.Lng))
-	return (thresholdLat <= 0.0000001 && thresholdLng <= 0.0000001)
-
-}
+type nodeData []*Node
 
 type NodeSet struct {
-	data map[int]Node
+	data nodeData
+	closedData nodeData
 }
 
-func (this *NodeSet) Add(value Node) {
+func (this *NodeSet) Add(value *Node) {
 	contains := this.Contains(value)
 	if !contains {
-		this.data[value.NodeID] = value
+		this.data = append(this.data, value)
+		sort.Sort(this.data)
 	}
 }
 
-func (this *NodeSet) GetByKey(key int) (value Node) {
-	return this.data[key]
+func (this *NodeSet) GetByKey(key int) (value *Node) {
+	for _, node := range this.data {
+		if node.NodeID == key {
+			return node
+		}
+	}
+	return nil
 }
 
-func (this *NodeSet) Remove(value Node) {
+func (this *NodeSet) Remove(value *Node) {
 	this.RemoveByKey(value.NodeID)
 }
 
 func (this *NodeSet) RemoveByKey(key int) () {
-	delete(this.data, key)
+	var newData nodeData
+	for _, node := range this.data {
+		if node.NodeID != key {
+			newData = append(newData, node)
+		}
+	}
+	sort.Sort(newData)
+	this.data = newData
 }
 
 func (this *NodeSet) ContainsByKey(key int) (exists bool) {
-	_, exists = this.data[key]
-	return exists
+	for _, node := range this.data{
+		if node.NodeID == key {
+			return true
+		}
+	}
+	return false
 }
 
-func (this *NodeSet) Contains(value Node) (exists bool) {
+func (this *NodeSet) Contains(value *Node) (exists bool) {
 	return this.ContainsByKey(value.NodeID)
 }
 
@@ -57,26 +61,17 @@ func (this *NodeSet) Length() (int) {
 }
 
 func NewNodeSet() (*NodeSet) {
-	return &NodeSet{make(map[int]Node)}
+	return &NodeSet{}
 }
 
-type NodeHeap []*Node
-
-func (h NodeHeap) Len() int           { return len(h) }
-func (h NodeHeap) Less(i, j int) bool { return h[i].F < h[j].F }
-func (h NodeHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-
-func (h *NodeHeap) Push(x interface{}) {
-	// Push and Pop use pointer receivers because they modify the slice's length,
-	// not just its contents.
-	*h = append(*h, x.(*Node))
+func (d nodeData) Len() int {
+	return len(d)
 }
 
-func (h *NodeHeap) Pop() interface{} {
-	old := *h
-	n := len(old)
-	x := old[n-1]
-	*h = old[0 : n-1]
-	return x
+func (d nodeData) Swap(i, j int) {
+	d[i], d[j] = d[j], d[i]
 }
 
+func (d nodeData) Less(i, j int) bool {
+	return d[i].F < d[j].F
+}
