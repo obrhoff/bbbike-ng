@@ -153,7 +153,7 @@ func (this *Route) GetAStarRoute() (){
 
 			neighbor.G = currentNode.G + DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
 			neighbor.Heuristic = this.CalculateHeuristic(currentNode, neighbor)
-			neighbor.Heuristic += int(float64(neighbor.Heuristic) * 0.1)
+			//neighbor.Heuristic += int(float64(neighbor.Heuristic) * 0.1)
 			neighbor.F = neighbor.G + neighbor.Heuristic
 			neighbor.ParentNodes = currentNode
 			log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)

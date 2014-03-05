@@ -52,14 +52,11 @@ func (this *Route) GetBiAStarRoute(startNode Node, endNode Node, forwardChannel 
 		currentNode.flippedDirection = reverse
 		forwardChannel <- currentNode
 		concurrentNode = <- backwardChannel
-
 		log.Println("Concurrent Node:", concurrentNode)
-
 		log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name, currentNode.StreetFromParentNode.Path, ", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
 		log.Println("Score:", currentNode.G)
 
-		if concurrentNode != nil {
-			if closedList.Contains(concurrentNode) {
+		if concurrentNode != nil && closedList.Contains(concurrentNode) {
 			finishNode := closedList.GetByKey(concurrentNode.NodeID)
 			log.Println("Found a way:", finishNode.NodeID)
 			log.Println("Found a way (Concurrent):", concurrentNode.NodeID)
@@ -69,7 +66,6 @@ func (this *Route) GetBiAStarRoute(startNode Node, endNode Node, forwardChannel 
 			close(forwardChannel)
 			close(backwardChannel) */
 			return
-			}
 		}
 
 		if currentNode.NodeID == endNode.NodeID {

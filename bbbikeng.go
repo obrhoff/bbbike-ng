@@ -84,7 +84,7 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 	trafficLight, okTrafficLight := parameters["lights"]
 	speed, okSpeed := parameters["speed"]
 	ferries, okFerries := parameters["ferries"]
-
+	performance, okPerformance := parameters["performance"]
 
 	if !okStart || !okEnd {
 		return
@@ -155,7 +155,17 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 
 	log.Printf("Start Routing from: %f,%f to %f,%f", startPoint.Lat, startPoint.Lng, endPoint.Lat, endPoint.Lng)
 	log.Printf("Preferences:", route.Preferences)
-	route.StartBiRouting(startPoint, endPoint)
+	if okPerformance {
+		useBidirectional, _ := strconv.ParseBool(performance[0])
+		if useBidirectional {
+			route.StartBiRouting(startPoint, endPoint)
+		} else {
+			route.StartRouting(startPoint, endPoint)
+		}
+	} else {
+		route.StartRouting(startPoint, endPoint)
+	}
+
 
 	if !okFormat {
 		w.WriteJson(route.GetGeojson())
