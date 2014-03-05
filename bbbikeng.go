@@ -155,7 +155,7 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 
 	log.Printf("Start Routing from: %f,%f to %f,%f", startPoint.Lat, startPoint.Lng, endPoint.Lat, endPoint.Lng)
 	log.Printf("Preferences:", route.Preferences)
-	route.StartRouting(startPoint, endPoint)
+	route.StartBiRouting(startPoint, endPoint)
 
 	if !okFormat {
 		w.WriteJson(route.GetGeojson())
