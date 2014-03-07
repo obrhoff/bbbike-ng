@@ -19,15 +19,17 @@ func (this *Route) StartBiRouting(startPoint Point, endPoint Point) {
 	var backwardNode Node
 
 	for node := range doneChannel {
-		if !node.flippedDirection {
-			forwardNode = node
-		} else {
+		if node.flippedDirection {
 			backwardNode = node
+		} else {
+			forwardNode = node
 		}
 		if backwardNode.NodeID == forwardNode.NodeID {
 			break
 		}
 	}
+
+
 	log.Println("ForwardNode:", forwardNode)
 	log.Println("BackwardNode:", backwardNode)
 	this.constructRoute(forwardNode)
@@ -56,6 +58,11 @@ func (this *Route) GetBiAStarRoute(startNode Node, endNode Node, forwardChannel 
 		log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name, currentNode.StreetFromParentNode.Path, ", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
 		log.Println("Score:", currentNode.G)
 
+		if currentNode.NodeID == endNode.NodeID {
+			doneChannel <- *currentNode
+			return
+		}
+
 		if concurrentNode != nil && closedList.Contains(concurrentNode) {
 			finishNode := closedList.GetByKey(concurrentNode.NodeID)
 			log.Println("Found a way:", finishNode.NodeID)
@@ -68,11 +75,6 @@ func (this *Route) GetBiAStarRoute(startNode Node, endNode Node, forwardChannel 
 			return
 		}
 
-		if currentNode.NodeID == endNode.NodeID {
-
-			return
-		}
-
 		openList.Remove(currentNode)
 		closedList.Add(currentNode)
 
@@ -80,16 +82,20 @@ func (this *Route) GetBiAStarRoute(startNode Node, endNode Node, forwardChannel 
 
 		for _, neighbor := range neighbors {
 
+			neighbor.StreetFromParentNode.CorrectPath(currentNode)
 			if closedList.Contains(neighbor) || !neighbor.Walkable  {
 				continue
 			}
 
+			/*
 			if openList.ContainsByKey(neighbor.NodeID) {
 				neighbor = openList.GetByKey(neighbor.NodeID)
-			}
+			} */
 
 			neighbor.G = currentNode.G + DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
-			neighbor.Heuristic = this.CalculateHeuristic(currentNode, neighbor)
+			neighbor.Heuristic = this.CalculateHeuristic(currentNode, neighbor, &endNode)
+			//neighbor.Heuristic += int(float64(neighbor.Heuristic) * 0.15)
+
 			neighbor.F = neighbor.G + neighbor.Heuristic
 			neighbor.ParentNodes = currentNode
 			log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)

@@ -4,9 +4,9 @@ import (
 
 )
 
-func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node) (heuristic int) {
+func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node, endNode *Node) (heuristic int) {
 
-	distanceToDestiny := DistanceFromPointToPoint(neighborNode.NodeGeometry, this.endNode.NodeGeometry)
+	distanceToDestiny := DistanceFromPointToPoint(neighborNode.NodeGeometry, endNode.NodeGeometry)
 	pathDistance := DistanceFromLinePoint(neighborNode.StreetFromParentNode.Path)
 	score := 1.0
 

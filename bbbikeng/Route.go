@@ -57,19 +57,16 @@ func (this *Route) constructRoute(finalNode Node) {
 		this.nodes = append(this.nodes, node)
 	}
 
-	log.Println("First:", finalNode)
-	log.Println("Intern:", routeNodes)
-
 	startNode := routeNodes[0]
 	endNode := routeNodes[len(routeNodes)-1]
 
-	for i, node := range routeNodes {
+	for i := 0; i < len(routeNodes)-1; i++ {
 
-		if i >= len(routeNodes)-1{
-			break
-		}
+		node := routeNodes[i]
+		log.Println(node.StreetFromParentNode)
+		log.Println("Node Flipped:", node.flippedDirection)
+		log.Println(node.NodeGeometry)
 
-		streetPath := flippPath(node)
 		for _, attribute := range node.StreetFromParentNode.Attributes{
 			this.Attributes = append(this.Attributes, attribute)
 		}
@@ -77,6 +74,7 @@ func (this *Route) constructRoute(finalNode Node) {
 		if node.NodeID == startNode.NodeID || node.NodeID == endNode.NodeID {
 
 			// needs to be fixed for first node
+
 			var index int
 			if node.NodeID == startNode.NodeID {
 				index = 0
@@ -92,18 +90,20 @@ func (this *Route) constructRoute(finalNode Node) {
 
 
 		} else {
+
 			if this.detailed[len(this.detailed)-1].WayID != node.StreetFromParentNode.WayID && this.detailed[len(this.detailed)-1].Name != node.StreetFromParentNode.Name {
 				node.StreetFromParentNode.PathIndex = len(this.way)-1
 				this.detailed = append(this.detailed, &node.StreetFromParentNode)
 			}
-			for i := 1; i < len(streetPath); i++ {
-				this.way = append(this.way, streetPath[i])
+			for i := 1; i < len(node.StreetFromParentNode.Path); i++ {
+				this.way = append(this.way, node.StreetFromParentNode.Path[i])
 			}
 
 		}
+
 	}
 
-	this.distance += DistanceFromLinePoint(this.way)
+	this.distance = DistanceFromLinePoint(this.way)
 
 }
 
@@ -129,6 +129,7 @@ func (this *Route) GetAStarRoute() (){
 	for openList.Length() > 0 {
 
 		currentNode := openList.data[0]
+		currentNode.flippedDirection = false
 		log.Println("ParentNode:", currentNode.NodeID , "(",currentNode.StreetFromParentNode.ID, currentNode.StreetFromParentNode.Name, currentNode.StreetFromParentNode.Path, ", Attributes:", currentNode.StreetFromParentNode.Attributes,") Geometry:", currentNode.NodeGeometry.Lat, "," ,currentNode.NodeGeometry.Lng, "")
 		log.Println("Score:", currentNode.G)
 		if currentNode.NodeID == this.endNode.NodeID {
@@ -143,24 +144,26 @@ func (this *Route) GetAStarRoute() (){
 
 		for _, neighbor := range neighbors {
 
+			neighbor.StreetFromParentNode.CorrectPath(currentNode)
+
 			if closedList.Contains(neighbor) || !neighbor.Walkable  {
 				continue
 			}
 
+			/*
 			if openList.ContainsByKey(neighbor.NodeID) {
 				neighbor = openList.GetByKey(neighbor.NodeID)
-			}
+			} */
+
 
 			neighbor.G = currentNode.G + DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
-			neighbor.Heuristic = this.CalculateHeuristic(currentNode, neighbor)
-			//neighbor.Heuristic += int(float64(neighbor.Heuristic) * 0.1)
+			neighbor.Heuristic = this.CalculateHeuristic(currentNode, neighbor, &this.endNode)
 			neighbor.F = neighbor.G + neighbor.Heuristic
 			neighbor.ParentNodes = currentNode
 			log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)
 			log.Println("Street:", neighbor.StreetFromParentNode.Name, "Path:", neighbor.StreetFromParentNode.Path, " Attributes:", neighbor.StreetFromParentNode.Attributes)
 			openList.Add(neighbor)
 		}
-
 		openList.Sort()
 	}
 }
