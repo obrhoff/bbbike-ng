@@ -29,7 +29,6 @@ func (this *Route) StartBiRouting(startPoint Point, endPoint Point) {
 		}
 	}
 
-
 	log.Println("ForwardNode:", forwardNode)
 	log.Println("BackwardNode:", backwardNode)
 	this.constructRoute(forwardNode)

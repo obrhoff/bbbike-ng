@@ -23,7 +23,7 @@ type Route struct {
 
 type Preferences struct {
 
-	Speed int64
+	Speed float32
 	Quality string
 	Types string
 	Greenways string
@@ -209,5 +209,5 @@ func (this *Preferences) SetIncludeFerries(includeFerries bool){
 }
 
 func (this *Preferences) SetPreferedSpeed(speed int64){
-	this.Speed = speed
+	this.Speed = (float32(speed) * 3.6)
 }

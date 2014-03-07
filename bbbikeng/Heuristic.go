@@ -5,7 +5,12 @@ import (
 
 )
 
-
+const cyclepath = "CA"
+const quality = "QA"
+const greenway = "GA"
+const handicap = "HA"
+const unlit = "UA"
+const trafficlight = "TA"
 
 /*func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node, endNode *Node) (heuristic int) {
 
@@ -34,10 +39,11 @@ import (
 func (this *Route) CalculateCosts(parentNode *Node, neighborNode *Node) (heuristic int) {
 
 	streetPathDistance := DistanceFromLinePoint(neighborNode.StreetFromParentNode.Path)
-	streetPathDistance += parentNode.G
+	timeForDistance := int(float32(streetPathDistance) / this.Preferences.Speed)
+	streetPathDistance += parentNode.G + timeForDistance
 
-	attributesMap := GetRelevantAttributes(parentNode, neighborNode)
-	log.Println("ATTRIBUTES:", attributesMap)
+	attributesPerIndex := GetRelevantAttributes(parentNode, neighborNode)
+	log.Println("attr", attributesPerIndex)
 
 	return streetPathDistance
 
@@ -47,7 +53,7 @@ func (this *Route) CalculateHeuristic(neighborNode *Node, endNode *Node) (heuris
 	return DistanceFromPointToPoint(neighborNode.NodeGeometry, endNode.NodeGeometry)
 }
 
-func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (attributesPerIndex []map[string]*AttributeInterface){
+func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (attributesPerIndex []map[string]string){
 
 	streetPath := neighborNode.StreetFromParentNode
 	var relevantAttributes *[]AttributeInterface
@@ -67,8 +73,7 @@ func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (attributesPer
 		log.Println("Relevant Attribute", attr)
 	}
 
-	attributesPerIndex = make([]map[string]*AttributeInterface,0,len(streetPath.Path))
-
+	attributesPerIndex = make([]map[string]string,0,len(streetPath.Path))
 	/*	distancePerIndex = make(map([int]int)
 
 	for i := 0; i < len(neighborNode.StreetFromParentNode.Path)-1; i++ {
@@ -80,11 +85,10 @@ func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (attributesPer
 	} */
 
 	for i :=0; i < len(streetPath.Path); i++ {
-		attributesPerIndex = append(attributesPerIndex, make(map[string]*AttributeInterface));
+		attributesPerIndex = append(attributesPerIndex, make(map[string]string));
 	}
 
 	for _, attribute := range *relevantAttributes {
-
 		attributeGeometry := attribute.Geometry()
 		firstGeometry := attributeGeometry[0]
 		lastGeometry := attributeGeometry[len(attributeGeometry)-1]
@@ -103,26 +107,45 @@ func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (attributesPer
 				var newKey string
 				switch attribute.(type)  {
 					case *CyclepathAttribute: {
-						newKey = "CA"
+						newKey = cyclepath
 					}
 					case *GreenwayAttribute: {
-						newKey = "GA"
+						newKey = greenway
 					}
 					case *QualityAttribute: {
-						newKey = "QA"
+						newKey = quality
 					}
 					case *UnlitAttribute: {
-						newKey = "UA"
+						newKey = unlit
 					}
 					case *TrafficLightAttribute: {
-						newKey = "TA"
+						newKey = trafficlight
 					}
 					case *HandicapAttribute: {
-						newKey = "HA"
+						newKey = handicap
 					}
 				}
-				attributeMap[newKey] = &attribute
+				attributeMap[newKey] = attribute.Type()
 			}
+		}
+	}
+
+	// substituting attributes
+	for _, segment := range attributesPerIndex {
+		if _, exists := segment[cyclepath]; !exists {
+			segment[cyclepath] = "RW0"
+		}
+		if _, exists := segment[greenway]; !exists {
+			segment[greenway] = "GW0"
+		}
+		if _, exists := segment[quality]; !exists {
+			segment[quality] = "Q0"
+		}
+		if _, exists := segment[unlit]; !exists {
+			segment[unlit] = "L"
+		}
+		if _, exists := segment[handicap]; !exists {
+			segment[handicap] = "H0"
 		}
 	}
 

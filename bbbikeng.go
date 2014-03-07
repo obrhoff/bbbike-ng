@@ -109,30 +109,37 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 	endPoint := bbbikeng.MakeNewPoint(endLat, endLng)
 	var route bbbikeng.Route
 
+	preferences := bbbikeng.Preferences{Speed: 20.0,
+										Quality: "Q2",
+										Types: "N0",
+										Greenways: "GR0",
+										AvoidUnlit: false,
+										AvoidLight: false,
+										IncludeFerries: true}
 
 	if okQuality {
-		route.Preferences.SetPreferedQuality(quality[0])
+		preferences.SetPreferedQuality(quality[0])
 	}
 
 	if okTypes {
-		route.Preferences.SetPreferedTypes(types[0])
+		preferences.SetPreferedTypes(types[0])
 	}
 
 	if okGreen {
-		route.Preferences.SetPreferedGreen(greenways[0])
+		preferences.SetPreferedGreen(greenways[0])
 	}
 
 	if okSpeed {
 		PreferedSpeed, speedParseError := strconv.ParseInt(speed[0], 0, 64)
 		if (speedParseError == nil) {
-			route.Preferences.SetPreferedSpeed(PreferedSpeed)
+			preferences.SetPreferedSpeed(PreferedSpeed)
 		}
 	}
 
 	if okUnlit {
 		AvoidUnlit, unlitParseError := strconv.ParseBool(unlit[0])
 		if (unlitParseError == nil) {
-			route.Preferences.SetAvoidUnlit(AvoidUnlit)
+			preferences.SetAvoidUnlit(AvoidUnlit)
 		}
 	}
 
@@ -140,19 +147,19 @@ func Route(w *rest.ResponseWriter, req *rest.Request) {
 	if okTrafficLight {
 		AvoidTrafficLight, trafficLightParseError := strconv.ParseBool(trafficLight[0])
 		if (trafficLightParseError == nil) {
-			route.Preferences.SetAvoidTrafficLight(AvoidTrafficLight)
+			preferences.SetAvoidTrafficLight(AvoidTrafficLight)
 		}
 	}
 
 	if okFerries {
 		IncludeFerries, ferriesParseError := strconv.ParseBool(ferries[0])
 		if (ferriesParseError == nil) {
-			route.Preferences.SetIncludeFerries(IncludeFerries)
+			preferences.SetIncludeFerries(IncludeFerries)
 		}
 
 	}
 
-
+	route.Preferences = preferences
 	log.Printf("Start Routing from: %f,%f to %f,%f", startPoint.Lat, startPoint.Lng, endPoint.Lat, endPoint.Lng)
 	log.Printf("Preferences:", route.Preferences)
 	if okPerformance {
