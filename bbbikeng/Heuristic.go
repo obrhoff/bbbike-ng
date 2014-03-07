@@ -1,10 +1,13 @@
 package bbbikeng
 
 import (
+	"log"
 
 )
 
-func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node, endNode *Node) (heuristic int) {
+
+
+/*func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node, endNode *Node) (heuristic int) {
 
 	distanceToDestiny := DistanceFromPointToPoint(neighborNode.NodeGeometry, endNode.NodeGeometry)
 	pathDistance := DistanceFromLinePoint(neighborNode.StreetFromParentNode.Path)
@@ -26,22 +29,47 @@ func (this *Route) CalculateHeuristic(parentNode *Node, neighborNode *Node, endN
 
 	return  distanceToDestiny
 
+} */
+
+func (this *Route) CalculateCosts(parentNode *Node, neighborNode *Node) (heuristic int) {
+
+	streetPathDistance := DistanceFromLinePoint(neighborNode.StreetFromParentNode.Path)
+	streetPathDistance += parentNode.G
+
+	attributesMap := GetRelevantAttributes(parentNode, neighborNode)
+	log.Println("ATTRIBUTES:", attributesMap)
+
+	return streetPathDistance
+
 }
 
-func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttributes []AttributeInterface, attributesPerIndex map[int][]*AttributeInterface, distancePerIndex map[int]int){
+func (this *Route) CalculateHeuristic(neighborNode *Node, endNode *Node) (heuristic int) {
+	return DistanceFromPointToPoint(neighborNode.NodeGeometry, endNode.NodeGeometry)
+}
 
-	flipped := !parentNode.NodeGeometry.Compare(neighborNode.StreetFromParentNode.Path[0])
-	if flipped {
-		relevantAttributes = neighborNode.StreetFromParentNode.FlippedAttribute
+func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (attributesPerIndex []map[string]*AttributeInterface){
+
+	streetPath := neighborNode.StreetFromParentNode
+	var relevantAttributes *[]AttributeInterface
+
+	if parentNode.flippedDirection {
+		relevantAttributes = &streetPath.FlippedAttribute
 	} else {
-		relevantAttributes = neighborNode.StreetFromParentNode.NormalAttribute
+		relevantAttributes = &streetPath.NormalAttribute
 	}
-	for _, globalAttribute := range neighborNode.StreetFromParentNode.GlobalAttribute {
-		relevantAttributes = append(relevantAttributes, globalAttribute)
+	for _, globalAttribute := range streetPath.GlobalAttribute {
+		*relevantAttributes = append(*relevantAttributes, globalAttribute)
 	}
 
-	attributesPerIndex = make(map[int][]*AttributeInterface)
-	distancePerIndex = make(map[int]int)
+	log.Println("RELEVANT:", relevantAttributes)
+
+	for _, attr := range *relevantAttributes {
+		log.Println("Relevant Attribute", attr)
+	}
+
+	attributesPerIndex = make([]map[string]*AttributeInterface,0,len(streetPath.Path))
+
+	/*	distancePerIndex = make(map([int]int)
 
 	for i := 0; i < len(neighborNode.StreetFromParentNode.Path)-1; i++ {
 		if i+1 <= len(neighborNode.StreetFromParentNode.Path)-1 {
@@ -49,9 +77,13 @@ func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttri
 			secondPoint := neighborNode.StreetFromParentNode.Path[i+1]
 			distancePerIndex[i] = DistanceFromPointToPoint(firstPoint, secondPoint)
 		}
+	} */
+
+	for i :=0; i < len(streetPath.Path); i++ {
+		attributesPerIndex = append(attributesPerIndex, make(map[string]*AttributeInterface));
 	}
 
-	for _, attribute := range relevantAttributes {
+	for _, attribute := range *relevantAttributes {
 
 		attributeGeometry := attribute.Geometry()
 		firstGeometry := attributeGeometry[0]
@@ -67,12 +99,34 @@ func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (relevantAttri
 		}
 		if lastIndex >= 0 && firstIndex >= 0 {
 			for pathIndex := firstIndex; pathIndex < lastIndex; pathIndex++ {
-				attributesPerIndex[pathIndex] = append(attributesPerIndex[pathIndex], &attribute)
+				attributeMap := attributesPerIndex[pathIndex]
+				var newKey string
+				switch attribute.(type)  {
+					case *CyclepathAttribute: {
+						newKey = "CA"
+					}
+					case *GreenwayAttribute: {
+						newKey = "GA"
+					}
+					case *QualityAttribute: {
+						newKey = "QA"
+					}
+					case *UnlitAttribute: {
+						newKey = "UA"
+					}
+					case *TrafficLightAttribute: {
+						newKey = "TA"
+					}
+					case *HandicapAttribute: {
+						newKey = "HA"
+					}
+				}
+				attributeMap[newKey] = &attribute
 			}
 		}
 	}
 
-	return relevantAttributes, attributesPerIndex, distancePerIndex
+	return attributesPerIndex
 
 }
 

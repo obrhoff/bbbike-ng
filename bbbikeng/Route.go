@@ -63,10 +63,6 @@ func (this *Route) constructRoute(finalNode Node) {
 	for i := 0; i < len(routeNodes)-1; i++ {
 
 		node := routeNodes[i]
-		log.Println(node.StreetFromParentNode)
-		log.Println("Node Flipped:", node.flippedDirection)
-		log.Println(node.NodeGeometry)
-
 		for _, attribute := range node.StreetFromParentNode.Attributes{
 			this.Attributes = append(this.Attributes, attribute)
 		}
@@ -156,8 +152,8 @@ func (this *Route) GetAStarRoute() (){
 			} */
 
 
-			neighbor.G = currentNode.G + DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
-			neighbor.Heuristic = this.CalculateHeuristic(currentNode, neighbor, &this.endNode)
+			neighbor.G = this.CalculateCosts(currentNode, neighbor)
+			neighbor.Heuristic = this.CalculateHeuristic(neighbor, &this.endNode)
 			neighbor.F = neighbor.G + neighbor.Heuristic
 			neighbor.ParentNodes = currentNode
 			log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)

@@ -46,12 +46,12 @@ func (this *Route) GetBiAStarRoute(startNode Node, endNode Node, forwardChannel 
 	var openList = NewNodeSet()
 	var closedList = NewNodeSet()
 	var concurrentNode *Node
+	startNode.flippedDirection = reverse
 	openList.Add(&startNode)
 
 	for openList.Length() > 0 {
 
 		currentNode := openList.data[0]
-		currentNode.flippedDirection = reverse
 		forwardChannel <- currentNode
 		concurrentNode = <- backwardChannel
 		log.Println("Concurrent Node:", concurrentNode)
@@ -82,6 +82,9 @@ func (this *Route) GetBiAStarRoute(startNode Node, endNode Node, forwardChannel 
 
 		for _, neighbor := range neighbors {
 
+			log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)
+			log.Println("Street:", neighbor.StreetFromParentNode.Name, "Path:", neighbor.StreetFromParentNode.Path, " Attributes:", neighbor.StreetFromParentNode.Attributes)
+			currentNode.flippedDirection = reverse
 			neighbor.StreetFromParentNode.CorrectPath(currentNode)
 			if closedList.Contains(neighbor) || !neighbor.Walkable  {
 				continue
@@ -92,14 +95,10 @@ func (this *Route) GetBiAStarRoute(startNode Node, endNode Node, forwardChannel 
 				neighbor = openList.GetByKey(neighbor.NodeID)
 			} */
 
-			neighbor.G = currentNode.G + DistanceFromLinePoint(neighbor.StreetFromParentNode.Path)
-			neighbor.Heuristic = this.CalculateHeuristic(currentNode, neighbor, &endNode)
-			//neighbor.Heuristic += int(float64(neighbor.Heuristic) * 0.15)
-
+			neighbor.G = this.CalculateCosts(currentNode, neighbor)
+			neighbor.Heuristic = this.CalculateHeuristic(neighbor, &endNode)
 			neighbor.F = neighbor.G + neighbor.Heuristic
 			neighbor.ParentNodes = currentNode
-			log.Println("Possible Node:", neighbor.NodeID , "(",neighbor.StreetFromParentNode.Name,") Geometry:", neighbor.NodeGeometry.Lat, "," ,neighbor.NodeGeometry.Lng)
-			log.Println("Street:", neighbor.StreetFromParentNode.Name, "Path:", neighbor.StreetFromParentNode.Path, " Attributes:", neighbor.StreetFromParentNode.Attributes)
 			openList.Add(neighbor)
 		}
 
