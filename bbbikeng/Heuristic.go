@@ -102,7 +102,7 @@ func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (attributesPer
 			}
 		}
 		if lastIndex >= 0 && firstIndex >= 0 {
-			for pathIndex := firstIndex; pathIndex < lastIndex; pathIndex++ {
+			for pathIndex := firstIndex; pathIndex <= lastIndex; pathIndex++ {
 				attributeMap := attributesPerIndex[pathIndex]
 				var newKey string
 				switch attribute.(type)  {
@@ -130,6 +130,7 @@ func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (attributesPer
 		}
 	}
 
+	/*
 	// substituting attributes
 	for _, segment := range attributesPerIndex {
 		if _, exists := segment[cyclepath]; !exists {
@@ -147,7 +148,7 @@ func GetRelevantAttributes (parentNode *Node, neighborNode *Node) (attributesPer
 		if _, exists := segment[handicap]; !exists {
 			segment[handicap] = "H0"
 		}
-	}
+	} */
 
 	return attributesPerIndex
 
